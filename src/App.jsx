@@ -1,10 +1,15 @@
+import Navbar from "./components/layouts/Navbar"
+import Hero from "./components/landing/Hero"
+import StatCard from "./components/common/StatCard"
+
 function App() {
   return (
-    <div className="min-h-screen bg-slate-100 flex items-center justify-center">
-      <h1 className="text-5xl font-bold text-emerald-600">
-        Finance Tracker
-      </h1>
-    </div>
+    <>
+      <Navbar />
+      <Hero />
+      <StatCard />
+    </>
+    
   );
 }
 
