@@ -1,4 +1,26 @@
+import StatCard from "../common/StatCard"
 function Hero() {
+
+    const stats = [
+        {
+            title: "Total Balance",
+            amount: "$250,000",
+            color: "text-emerald-600",
+        },
+
+        {
+            title: "Total Balance",
+            amount: "$320,000",
+            color: "text-blue-600",
+        },
+
+        {
+            title: "Expenses",
+            amount: "$70,000",
+            color: "text-red-600",
+        },
+        
+    ];
     return(
         <section className="bg-slate-50">
             <div className="max-w-7xl mx-auto px-6 py-20 flex flex-col
@@ -35,11 +57,22 @@ function Hero() {
 
                 {/* Right Side */}
                 <div className="flex-1 flex justify-center">
-                    <div className="w-full max-w-md h-80 rounded-3xl bg-white 
-                    shadow-2xl flex items-center justify-center">
-                        <p className="text-slate-400 text-xl">
+                    <div className="w-full max-w-md bg-white rounded-3xl 
+                        shadow-2xl p-6">
+                        <h3 className="text-xl font-bold text-slate-800 mb-6">
                             Dashboard Preview
-                        </p>
+                        </h3>
+
+                        <div className="space-y-4">
+                            {stats.map((stat) => (
+                                <StatCard
+                                key={stat.title}
+                                title={stat.title}
+                                amount={stat.amount}
+                                color={stat.color}
+                                />
+                            ))}
+                        </div>
                     </div>
                 </div>
             </div>
