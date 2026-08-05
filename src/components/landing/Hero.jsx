@@ -1,4 +1,5 @@
 import StatCard from "../common/StatCard"
+import Button from "../common/button"
 function Hero() {
 
     const stats = [
@@ -23,7 +24,7 @@ function Hero() {
     ];
     return(
         <section className="bg-slate-50">
-            <div className="max-w-7xl mx-auto px-6 py-20 flex flex-col
+            <div className="max-w-7xl mx-auto px-6 py-24 flex flex-col
             lg:flex-row items-center justify-between gap-16">
 
                 {/* Left Side */}
@@ -43,22 +44,22 @@ function Hero() {
                     </p>
 
                     <div className="mt-8 flex gap-4">
-                        <button className="bg-emerald-600 text-white px-6 py-3
-                        rounded-lg hover:bg-emerald-700 transition">
-                            Get Started
-                        </button>
+                        <Button
+                            text="Get Started"
+                            variant="primary"
+                        />
 
-                        <button className="border border-slate-300 px-6 py-3
-                        rounded-lg hover:bg-slate-100 transition">
-                            Learn More
-                        </button>
+                        <Button
+                            text="Learn More"
+                            variant="secondary"
+                        />
                     </div>
                 </div>
 
                 {/* Right Side */}
                 <div className="flex-1 flex justify-center">
                     <div className="w-full max-w-md bg-white rounded-3xl 
-                        shadow-2xl p-6">
+                        shadow-8xl p-6">
                         <h3 className="text-xl font-bold text-slate-800 mb-6">
                             Dashboard Preview
                         </h3>
