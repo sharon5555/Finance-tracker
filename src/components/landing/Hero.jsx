@@ -5,23 +5,28 @@ function Hero() {
 
     const [balance, setBalance] = useState(250000);
 
+    function increaseBalance() {
+        console.log("Button clicked!");
+        setBalance(balance  + 10000);
+    }
+
     const stats = [
 
         {
             title: "Total Balance",
-            amount: "$250,000",
+            amount: `₦${balance.toLocaleString()}`,
             color: "text-emerald-600",
         },
 
         {
             title: "Total Balance",
-            amount: "$320,000",
+            amount: "₦320,000",
             color: "text-blue-600",
         },
 
         {
             title: "Expenses",
-            amount: "$70,000",
+            amount: "₦70,000",
             color: "text-red-600",
         },
         
@@ -57,6 +62,12 @@ function Hero() {
                             text="Learn More"
                             variant="secondary"
                         />
+
+                        <button 
+                        onClick={increaseBalance}
+                        className="mt-6 bg-blue-600 text-white px-4 py-2 rounded-lg">
+                            $10,000
+                        </button>
                     </div>
                 </div>
 
