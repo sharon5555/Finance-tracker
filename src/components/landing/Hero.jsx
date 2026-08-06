@@ -1,8 +1,12 @@
+import { useState } from "react";
 import StatCard from "../common/StatCard"
 import Button from "../common/button"
 function Hero() {
 
+    const [balance, setBalance] = useState(250000);
+
     const stats = [
+
         {
             title: "Total Balance",
             amount: "$250,000",
