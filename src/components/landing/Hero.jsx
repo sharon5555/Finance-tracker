@@ -4,10 +4,16 @@ import Button from "../common/button"
 function Hero() {
 
     const [balance, setBalance] = useState(250000);
+    const [amount, setAmount] = useState("")
 
     function increaseBalance() {
-        console.log("Button clicked!");
-        setBalance(balance  + 10000);
+        if (amount === "" || Number(amount) <= 0) {
+            alert("Please enter a valid amount.");
+            return;
+        }
+
+        setBalance(balance + Number(amount));
+        setAmount("");
     }
 
     const stats = [
@@ -52,7 +58,7 @@ function Hero() {
                         beautiful and secure application.
                     </p>
 
-                    <div className="mt-8 flex gap-4">
+                    <div className="mt-10 flex gap-5">
                         <Button
                             text="Get Started"
                             variant="primary"
@@ -63,10 +69,22 @@ function Hero() {
                             variant="secondary"
                         />
 
+                    </div>
+
+                    <div className="mt-8 flex gap-4">
+                        <input
+                        type="number"
+                        placeholder="Enter amount"
+                        value={amount}
+                        onChange={(event) => setAmount(event.target.value)}
+                        className="border rounded-lg px-4 py-2"
+                        />
+
                         <button 
                         onClick={increaseBalance}
-                        className="mt-6 bg-blue-600 text-white px-4 py-2 rounded-lg">
-                            $10,000
+                        className="mt-6 bg-blue-600 text-white px-4 py-2 rounded-lg"
+                        >
+                            Add Income
                         </button>
                     </div>
                 </div>
