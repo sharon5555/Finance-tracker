@@ -5,6 +5,7 @@ function Hero() {
 
     const [balance, setBalance] = useState(250000);
     const [amount, setAmount] = useState("")
+    const [transactions, setTransactions] = useState([]);
 
     function increaseBalance() {
         if (amount === "" || Number(amount) <= 0) {
