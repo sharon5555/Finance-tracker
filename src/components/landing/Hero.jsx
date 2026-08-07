@@ -13,7 +13,15 @@ function Hero() {
             return;
         }
 
+        const newTransaction = {
+            id: Date.now(),
+            title: "Income",
+            amount: Number(amount),
+            type: "Income"
+        };
+
         setBalance(balance + Number(amount));
+        setTransactions([...transactions, newTransaction]);
         setAmount("");
     }
 
@@ -80,6 +88,10 @@ function Hero() {
                         onChange={(event) => setAmount(event.target.value)}
                         className="border rounded-lg px-4 py-2"
                         />
+
+                        <pre className="mt-6 bg-gray-100 p-4 rounded">
+                            {JSON.stringify(transactions, null, 2)}
+                        </pre>
 
                         <button 
                         onClick={increaseBalance}
