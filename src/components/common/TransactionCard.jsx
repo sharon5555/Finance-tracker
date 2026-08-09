@@ -7,8 +7,13 @@ function TransactionCard({ title, amount, type }) {
                 <p className="text-gray-500">{type}</p>
             </div>
 
-            <p className="font-bold">
-                ₦{amount.toLocalString()}
+            <p className={`font-bold ${
+                type === "Income" 
+                ? "text-green-600" 
+                : "text-red-600"
+            }`}
+            >
+                {type === "Income" ? "+" : "-"}₦{amount.toLocaleString()}
             </p>
         </div>
     );

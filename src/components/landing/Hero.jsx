@@ -14,13 +14,6 @@ function Hero() {
             return;
         }
 
-        function decreaseBalance() {
-            if (amount === "" || Number(amount) <= 0) {
-                alert("Please enter a valid amount.");
-                return;
-            }
-        }
-
         const newTransaction = {
             id: Date.now(),
             title: "Income",
@@ -31,6 +24,24 @@ function Hero() {
         setBalance(balance + Number(amount));
         setTransactions([...transactions, newTransaction]);
         setAmount("");
+    }
+
+    function decreaseBalance() {
+            if (amount === "" || Number(amount) <= 0) {
+                alert("Please enter a valid amount.");
+                return;
+            }
+
+            const newTransaction = {
+                id: Date.now(),
+                title: "Expense",
+                amount: Number(amount),
+                type: "Expense"
+            }
+
+            setBalance(balance - Number(amount));
+            setTransactions([...transactions, newTransaction]);
+            setAmount("");
     }
 
     const stats = [
@@ -108,7 +119,7 @@ function Hero() {
                         onClick={decreaseBalance}
                         className="mt-6 bg-red-600 text-white px-4 py-2 rounded-lg"
                         >
-                            Add Expenses
+                            Add Expense
                         </button>
                     </div>
 
