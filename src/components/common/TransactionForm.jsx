@@ -1,0 +1,37 @@
+function TransactionForm() {
+    return(
+        <div className="bg-white p-6 rounded-2xl shadow-md">
+            <h2 className="text-2xl font-bold text-slate-800 mb-6">
+                Add New Transaction
+            </h2>
+
+            <form>
+                <div className="mb-4">
+                    <label className="block mb-2 font-medium">
+                        Title 
+                    </label>
+
+                    <input
+                    type="text"
+                    placeholder="e.g. Salary"
+                    className="w-full border rounded-lg px-4 py-2"
+                    />
+                </div>
+
+                <div className="mb-4">
+                    <label className="block mb-2 font-medium">
+                        Amount
+                    </label>
+
+                    <input 
+                    type="text"
+                    placeholder="e.g. 50000"
+                    className="w-full border rounded-lg px-4 py-2"
+                    />
+                </div>
+            </form>
+        </div>
+    );
+}
+
+export default TransactionForm;
