@@ -1,4 +1,10 @@
+import { useState } from "react";
+
 function TransactionForm() {
+
+    const [title, setTitle] = useState("");
+    const [amount, setAmount] = useState("");
+
     return(
         <div className="bg-white p-6 rounded-2xl shadow-md">
             <h2 className="text-2xl font-bold text-slate-800 mb-6">
@@ -14,6 +20,8 @@ function TransactionForm() {
                     <input
                     type="text"
                     placeholder="e.g. Salary"
+                    value={title}
+                    onChange={(event) => setTitle(event.target.value)}
                     className="w-full border rounded-lg px-4 py-2"
                     />
                 </div>
@@ -24,8 +32,10 @@ function TransactionForm() {
                     </label>
 
                     <input 
-                    type="text"
+                    type="number"
                     placeholder="e.g. 50000"
+                    value={amount}
+                    onChange={(event) => setAmount(event.target.value)}
                     className="w-full border rounded-lg px-4 py-2"
                     />
                 </div>
