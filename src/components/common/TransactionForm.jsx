@@ -1,6 +1,6 @@
 import { useState } from "react";
 
-function TransactionForm() {
+function TransactionForm({ onAddTransaction }) {
 
     const [title, setTitle] = useState("");
     const [amount, setAmount] = useState("");
@@ -20,13 +20,39 @@ function TransactionForm() {
         "Entertainment"
     ];
 
+    function handleSubmit(event) {
+        event.preventDefault();
+
+        if (title === "" || amount === "") {
+            alert("Please fill in the required fields.");
+            return;
+        }
+
+        const newTransaction = {
+            id: Date.now(),
+            title: title,
+            amount: Number(amount),
+            type: type,
+            category: category,
+            date: date
+        };
+
+        onAddTransaction(newTransaction);
+
+        setTitle("");
+        setAmount("");
+        setType("Income");
+        setCategory("Salary");
+        setDate("");
+    }
+
     return(
         <div className="bg-white p-6 rounded-2xl shadow-md">
             <h2 className="text-2xl font-bold text-slate-800 mb-6">
                 Add New Transaction
             </h2>
 
-            <form>
+            <form onSubmit={handleSubmit}>
                 <div className="mb-4">
                     <label className="block mb-2 font-medium">
                         Title 
@@ -88,7 +114,7 @@ function TransactionForm() {
                     </select>
                 </div>
 
-                <div className="className mb-4">
+                <div className="mb-4">
                     <label className="block mb-2 font-medium">
                         Date
                     </label>

@@ -9,7 +9,7 @@ function Hero() {
     const [transactions, setTransactions] = useState([]);
 
     function addTransaction(transaction) {
-        setTransactions([...transaction, transaction]);
+        setTransactions([...transactions, transaction]);
 
         if(transaction.type === "Income") {
             setBalance(balance + Number(transaction.amount));
@@ -27,7 +27,7 @@ function Hero() {
         },
 
         {
-            title: "Total Balance",
+            title: "Income",
             amount: "₦320,000",
             color: "text-blue-600",
         },
@@ -73,7 +73,7 @@ function Hero() {
 
                     </div>
 
-                    <TransactionForm onAddTranaction={addTransaction} />
+                    <TransactionForm onAddTransaction={addTransaction} />
 
                     <div className="mt-10">
                         <h2 className="text-2xl font-bold mb-4">
