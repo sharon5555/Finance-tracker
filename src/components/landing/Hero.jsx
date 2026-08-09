@@ -1,6 +1,7 @@
 import { useState } from "react";
 import StatCard from "../common/StatCard"
 import Button from "../common/button"
+import TransactionCard from "../common/TransactionCard"
 function Hero() {
 
     const [balance, setBalance] = useState(250000);
@@ -11,6 +12,13 @@ function Hero() {
         if (amount === "" || Number(amount) <= 0) {
             alert("Please enter a valid amount.");
             return;
+        }
+
+        function decreaseBalance() {
+            if (amount === "" || Number(amount) <= 0) {
+                alert("Please enter a valid amount.");
+                return;
+            }
         }
 
         const newTransaction = {
@@ -80,7 +88,7 @@ function Hero() {
 
                     </div>
 
-                    <div className="mt-8 flex gap-4">
+                    <div className="mt-6 flex gap-4">
                         <input
                         type="number"
                         placeholder="Enter amount"
@@ -89,16 +97,34 @@ function Hero() {
                         className="border rounded-lg px-4 py-2"
                         />
 
-                        <pre className="mt-6 bg-gray-100 p-4 rounded">
-                            {JSON.stringify(transactions, null, 2)}
-                        </pre>
-
                         <button 
                         onClick={increaseBalance}
                         className="mt-6 bg-blue-600 text-white px-4 py-2 rounded-lg"
                         >
                             Add Income
                         </button>
+                        
+                        <button
+                        onClick={decreaseBalance}
+                        className="mt-6 bg-red-600 text-white px-4 py-2 rounded-lg"
+                        >
+                            Add Expenses
+                        </button>
+                    </div>
+
+                    <div className="mt-10">
+                        <h2 className="text-2xl font-bold mb-4">
+                            Recent Transaction
+                        </h2>
+
+                        {transactions.map((transaction) => (
+                            <TransactionCard 
+                                key={transaction.id}
+                                title={transaction.title}
+                                amount={transaction.amount}
+                                type={transaction.type}
+                            />
+                        ))}
                     </div>
                 </div>
 
