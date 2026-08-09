@@ -86,6 +86,8 @@ function Hero() {
                                 title={transaction.title}
                                 amount={transaction.amount}
                                 type={transaction.type}
+                                category={transaction.category}
+                                date={transaction.date}
                             />
                         ))}
                     </div>
