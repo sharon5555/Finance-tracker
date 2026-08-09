@@ -6,6 +6,7 @@ function TransactionForm() {
     const [amount, setAmount] = useState("");
     const [type, setType] = useState("Income");
     const [category, setCategory] = useState("Salary");
+    const [date, setDate] = useState("");
 
     const categories = [
         "Salary",
@@ -86,6 +87,26 @@ function TransactionForm() {
                         ))}
                     </select>
                 </div>
+
+                <div className="className mb-4">
+                    <label className="block mb-2 font-medium">
+                        Date
+                    </label>
+
+                    <input type="date"
+                    value={date}
+                    onChange={(event) => setDate(event.target.value)}
+                    className="w-full border rounded-lg px-4 py-2"
+                    />
+                </div>
+
+                <button
+                type="submit"
+                className="w-full bg-emerald-600 text-white py-3 rounded-lg
+                font-semibold hover:bg-emerald-700"
+                >
+                    Save Transaction
+                </button>
             </form>
         </div>
     );
