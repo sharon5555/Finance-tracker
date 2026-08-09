@@ -2,46 +2,20 @@ import { useState } from "react";
 import StatCard from "../common/StatCard"
 import Button from "../common/button"
 import TransactionCard from "../common/TransactionCard"
+import TransactionForm from "../common/TransactionForm";
 function Hero() {
 
     const [balance, setBalance] = useState(250000);
-    const [amount, setAmount] = useState("")
     const [transactions, setTransactions] = useState([]);
 
-    function increaseBalance() {
-        if (amount === "" || Number(amount) <= 0) {
-            alert("Please enter a valid amount.");
-            return;
+    function addTransaction(transaction) {
+        setTransactions([...transaction, transaction]);
+
+        if(transaction.type === "Income") {
+            setBalance(balance + Number(transaction.amount));
+        } else {
+            setBalance(balance - Number(transaction.amount));
         }
-
-        const newTransaction = {
-            id: Date.now(),
-            title: "Income",
-            amount: Number(amount),
-            type: "Income"
-        };
-
-        setBalance(balance + Number(amount));
-        setTransactions([...transactions, newTransaction]);
-        setAmount("");
-    }
-
-    function decreaseBalance() {
-            if (amount === "" || Number(amount) <= 0) {
-                alert("Please enter a valid amount.");
-                return;
-            }
-
-            const newTransaction = {
-                id: Date.now(),
-                title: "Expense",
-                amount: Number(amount),
-                type: "Expense"
-            }
-
-            setBalance(balance - Number(amount));
-            setTransactions([...transactions, newTransaction]);
-            setAmount("");
     }
 
     const stats = [
@@ -99,29 +73,7 @@ function Hero() {
 
                     </div>
 
-                    <div className="mt-6 flex gap-4">
-                        <input
-                        type="number"
-                        placeholder="Enter amount"
-                        value={amount}
-                        onChange={(event) => setAmount(event.target.value)}
-                        className="border rounded-lg px-4 py-2"
-                        />
-
-                        <button 
-                        onClick={increaseBalance}
-                        className="mt-6 bg-blue-600 text-white px-4 py-2 rounded-lg"
-                        >
-                            Add Income
-                        </button>
-                        
-                        <button
-                        onClick={decreaseBalance}
-                        className="mt-6 bg-red-600 text-white px-4 py-2 rounded-lg"
-                        >
-                            Add Expense
-                        </button>
-                    </div>
+                    <TransactionForm onAddTranaction={addTransaction} />
 
                     <div className="mt-10">
                         <h2 className="text-2xl font-bold mb-4">
