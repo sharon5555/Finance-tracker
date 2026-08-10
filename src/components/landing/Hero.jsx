@@ -26,6 +26,8 @@ function Hero() {
         .filter((transaction) => transaction.type === "Expense")
         .reduce((total, transaction) => total + transaction.amount, 0)
     
+    const savings = totalIncome - totalExpenses;
+
     const stats = [
 
         {
@@ -44,6 +46,12 @@ function Hero() {
             title: "Total Expenses",
             amount: `₦${totalExpenses.toLocaleString()}`,
             color: "text-red-600",
+        },
+
+        {
+            title: "Savings",
+            amount: `₦${savings.toLocaleString()}`,
+            color: "text-purple-600",
         },
         
     ];
