@@ -36,13 +36,13 @@ function Hero() {
 
         {
             title: "Total Income",
-            amount: `₦${balance.toLocaleString()}`,
+            amount: `₦${totalIncome.toLocaleString()}`,
             color: "text-blue-600",
         },
 
         {
             title: "Total Expenses",
-            amount: `₦${balance.toLocaleString()}`,
+            amount: `₦${totalExpenses.toLocaleString()}`,
             color: "text-red-600",
         },
         
