@@ -18,6 +18,14 @@ function Hero() {
         }
     }
 
+    const totalIncome = transactions
+        .filter((transaction) => transaction.type === "Income")
+        .reduce((total, transaction) => total + transaction.amount, 0);
+
+    const totalExpenses = transactions
+        .filter((transaction) => transaction.type === "Expense")
+        .reduce((total, transaction) => total + transaction.amount, 0)
+    
     const stats = [
 
         {
@@ -27,14 +35,14 @@ function Hero() {
         },
 
         {
-            title: "Income",
-            amount: "₦320,000",
+            title: "Total Income",
+            amount: `₦${balance.toLocaleString()}`,
             color: "text-blue-600",
         },
 
         {
-            title: "Expenses",
-            amount: "₦70,000",
+            title: "Total Expenses",
+            amount: `₦${balance.toLocaleString()}`,
             color: "text-red-600",
         },
         
