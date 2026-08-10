@@ -2,7 +2,8 @@
 import { 
     FiArrowDownLeft, 
     FiArrowUpRight,
-    FiTrash2
+    FiTrash2,
+    FiEdit3
 } from "react-icons/fi";
 
 
@@ -13,6 +14,7 @@ function TransactionCard({
     type, 
     category, 
     date ,
+    onEdit,
     onDelete
 }) {
 
@@ -101,19 +103,43 @@ function TransactionCard({
                 */}
                 <div className="text-right">
 
-                    {/* Delete button */}
-                    <button
-                        // Call the delete function when clicked.
-                        onClick={onDelete}
+                    {/* 
+                        Action buttons:
+                        This container keeps the Edit and Delete buttons together
+                        and adds space between them.
+                    */}
+                    <div className="flex justify-end gap-4 mb-2">
 
-                        // Give the button a tooltip.
-                        title="Delete transaction"
+                        {/* Edit transaction button */}
+                        <button
+                            // Call the edit function when the user clicks this button.
+                            onClick={onEdit}
 
-                        // Style the delete button.
-                        className="text-slate-400 hover:text-red-600 mb-2"
-                    >
-                        <FiTrash2 size={18} />
-                    </button>
+                            // Show a small message when the mouse is over the button.
+                            title="Edit transaction"
+
+                            // Give the edit button a blue hover effect.
+                            className="text-slate-400 hover:text-blue-600"
+                        >
+                            <FiEdit3 size={17} />
+                        </button>
+
+
+                        {/* Delete transaction button */}
+                        <button
+                            // Call the delete function when the user clicks this button.
+                            onClick={onDelete}
+
+                            // Show a small message when the mouse is over the button.
+                            title="Delete transaction"
+
+                            // Give the delete button a red hover effect.
+                            className="text-slate-400 hover:text-red-600"
+                        >
+                            <FiTrash2 size={17} />
+                        </button>
+
+                    </div>
 
                     {/* 
                         Amount:

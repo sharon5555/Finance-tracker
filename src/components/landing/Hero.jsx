@@ -80,6 +80,22 @@ function Hero() {
 
     }
 
+    // This function finds a transaction and prepare it to be edited.
+    function editTransaction(id) {
+
+        // Find the transaction that the user wants to edit.
+        const transactionToEdit = transactions.find(
+            (transaction) => transaction.id === id
+        );
+
+        // If the transaction does not exist, stop the function.
+        if(!transactionToEdit) {
+            return;
+        }
+
+        console.log("Transaction to edit: ", transactionToEdit)
+    }
+
     // Calculate the total amount of all Income transactions.
     // filter() keeps only transactions whose type is "Income".
     // reduce() adds all of those income amounts together.
@@ -260,6 +276,9 @@ function Hero() {
                                     type={transaction.type}
                                     category={transaction.category}
                                     date={transaction.date}
+
+                                    // Pass the edit function to TransactionCard.
+                                    onEdit={() => editTransaction(transaction.id)}
 
                                     // Pass the transaction's id to the delete function.
                                     onDelete={() => deleteTransaction(transaction.id)}
