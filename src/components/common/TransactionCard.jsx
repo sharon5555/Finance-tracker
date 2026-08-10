@@ -1,8 +1,20 @@
 // Import icons for income and expense transactions.
-import { FiArrowDownLeft, FiArrowUpRight } from "react-icons/fi";
+import { 
+    FiArrowDownLeft, 
+    FiArrowUpRight,
+    FiTrash2
+} from "react-icons/fi";
 
 
-function TransactionCard({ title, amount, type, category, date }) {
+// Receive the transaction details and the delete function from Hero.jsx.
+function TransactionCard({ 
+    title, 
+    amount, 
+    type, 
+    category, 
+    date ,
+    onDelete
+}) {
 
     // Check whether this transaction is an income.
     // This value will help us choose the correct icon and colors.
@@ -88,6 +100,20 @@ function TransactionCard({ title, amount, type, category, date }) {
                     the transaction is Income or Expense.
                 */}
                 <div className="text-right">
+
+                    {/* Delete button */}
+                    <button
+                        // Call the delete function when clicked.
+                        onClick={onDelete}
+
+                        // Give the button a tooltip.
+                        title="Delete transaction"
+
+                        // Style the delete button.
+                        className="text-slate-400 hover:text-red-600 mb-2"
+                    >
+                        <FiTrash2 size={18} />
+                    </button>
 
                     {/* 
                         Amount:

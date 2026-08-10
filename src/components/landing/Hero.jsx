@@ -43,6 +43,42 @@ function Hero() {
         }
     }
 
+    // This function removes a transaction from the transactions array.
+    function deleteTransaction(id) {
+
+        //find the transaction that the user wants to delete.
+        const transactionToDelete = transactions.find(
+            (transaction) => transaction.id === id
+        );
+
+        // If the transaction cannot be found, stop the function.
+        if(!transactionToDelete) {
+            return;
+        }
+
+        //Remove the selected transaction from the array.
+        setTransactions(
+            transactions.filter(
+                (transaction) => transaction.id !== id
+            )
+        );
+
+        // Reverse the effect that the transaction had on the balance.
+        if (transactionToDelete.type === "Income") {
+
+            //If is was income, substract it from the balance.
+            setBalance(
+                balance - Number(transactionToDelete.amount)
+            );
+        } else {
+
+            //If it was an expense, add it back to the balance.
+            setBalance(
+                balance + Number(transactionToDelete.amount)
+            );
+        }
+
+    }
 
     // Calculate the total amount of all Income transactions.
     // filter() keeps only transactions whose type is "Income".
@@ -224,6 +260,9 @@ function Hero() {
                                     type={transaction.type}
                                     category={transaction.category}
                                     date={transaction.date}
+
+                                    // Pass the transaction's id to the delete function.
+                                    onDelete={() => deleteTransaction(transaction.id)}
                                 />
 
                             ))}
