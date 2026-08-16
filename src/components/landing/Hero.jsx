@@ -23,24 +23,72 @@ function Hero() {
     // Store all transactions created by the user.
     const [transactions, setTransactions] = useState([]);
 
+    // store the transaction currently being edited.
+    const [editingTransaction, setEditingTransaction] = useState(null);
+
 
     // This function runs whenever a new transaction is submitted.
     function addTransaction(transaction) {
 
-        // Add the new transaction to our transactions array.
-        setTransactions([...transactions, transaction]);
+        // check whether the transaction already exists.
+        const existingTransaction = transactions.find(
+            (item) => item.id === transaction.id
+        );
 
-        // Check whether the transaction is Income or Expense.
-        if (transaction.type === "Income") {
+        // If the transaction already exists,
+        // we are editing an existing transaction.
+        if (existingTransaction) {
 
-            // If it is Income, add the amount to the balance.
-            setBalance(balance + Number(transaction.amount));
+            // calculate the balance before the old transaction was added.
+            let updatedBalance = balance;
+
+            // Remove the effect of the old transaction.
+            if (existingTransaction.type === "Income") {
+                updatedBalance -= Number(existingTransaction.amount);
+            } else {
+                updatedBalance += Number(existingTransaction.amount);
+            }
+
+            // Add the effect of the updated transaction.
+            if (transaction.type === "Income") {
+                updatedBalance += Number(transaction.amount);
+            } else {
+                updatedBalance -= Number(transaction.amount);
+            }
+
+            // Replace the old transaction with the updated transaction.
+            setTransactions(
+                transactions.map((item) =>
+                    item.id === transaction.id
+                        ? transaction
+                        : item
+                )
+            );
+
+            // Update the balance.
+            setBalance(updatedBalance);
 
         } else {
 
-            // If it is an Expense, subtract the amount from the balance.
-            setBalance(balance - Number(transaction.amount));
+            // If the transaction doesn't already exist,
+            // Add it as a new transaction.
+            setTransactions([...transactions, transaction]);
+
+            // Update the balance for the new transaction.
+            if (transaction.type === "Income") {
+                setBalance(balance + Number(transaction.amount));
+            } else {
+                setBalance(balance - Number(transaction.amount));
+            }
+
         }
+    }
+
+    // Stop editing the current transaction.
+    function finishEditing() {
+
+        // clear the editing transaction.
+        setEditingTransaction(null);
     }
 
     // This function removes a transaction from the transactions array.
@@ -93,7 +141,8 @@ function Hero() {
             return;
         }
 
-        console.log("Transaction to edit: ", transactionToEdit)
+        //store the transaction so TransactionForm can use its information.
+        setEditingTransaction(transactionToEdit);
     }
 
     // Calculate the total amount of all Income transactions.
@@ -242,9 +291,13 @@ function Hero() {
                             Transaction Form:
                             Allows the user to enter and save
                             a new income or expense.
+                            Receives the transaction being edited.
+                            If editingTransaction is null, the form works normally.
                         */}
                         <TransactionForm
                             onAddTransaction={addTransaction}
+                            editingTransaction={editingTransaction}
+                            onFinishEditing={finishEditing}
                         />
 
 

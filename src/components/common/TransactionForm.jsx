@@ -1,13 +1,46 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 
-function TransactionForm({ onAddTransaction }) {
+//Recieve the function for adding transactions 
+//and the transactions that may currently be edited.
+function TransactionForm({ 
+    onAddTransaction,
+    editingTransaction,
+    onFinishEditing
+}) {
 
+
+    // Store the transaction title.
     const [title, setTitle] = useState("");
+
+    // Store the transaction amount.
     const [amount, setAmount] = useState("");
+
+    // Store whether the transaction is Income or Expense.
     const [type, setType] = useState("Income");
+
+     // Store the transaction category.
     const [category, setCategory] = useState("Salary");
+
+     // Store the transaction date
     const [date, setDate] = useState("");
+
+    // load the selected transaction into the form when the user clicks Edit.
+    useEffect(() => {
+
+        // Only run this when a transaction has been selected for editing.
+        if (!editingTransaction) {
+            return;
+        }
+
+        // Fill the form with the existing transaction information.
+        setTitle(editingTransaction.title);
+        setAmount(String(editingTransaction.amount));
+        setType(editingTransaction.type);
+        setCategory(editingTransaction.category);
+        setDate(editingTransaction.date);
+
+    }, [editingTransaction]);
 
     const categories = [
         "Salary",
@@ -47,18 +80,30 @@ function TransactionForm({ onAddTransaction }) {
             return;
         }
 
-        // Create an object containing all the transaction information.
-        const newTransaction = {
-            id: Date.now(),
+        // create the transaction information.
+        const transactionDate = {
+
+            // Keep the old ID when editing.
+            // Create a new ID when adding a transaction.
+            id: editingTransaction
+                ? editingTransaction.id
+                : Date.now(),
+
             title: title,
             amount: Number(amount),
             type: type,
             category: category,
             date: date,
-        };
+        }
 
         // Send the new transaction to Hero.jsx.
-        onAddTransaction(newTransaction);
+        // Hero.jsx will decide whether to add or update it.
+        onAddTransaction(transactionDate);
+
+        // if we were editing, exit edit mode.
+        if (editingTransaction) {
+            onFinishEditing();
+        }
 
          // Clear the form after successfully saving.
         setTitle("");
@@ -68,10 +113,17 @@ function TransactionForm({ onAddTransaction }) {
         setDate("");
     }
 
+
+    /*
+        Change  the heading depending on whether 
+        the user is adding or editing a transaction.
+    */
     return(
         <div className="bg-white p-6 rounded-2xl shadow-md">
             <h2 className="text-2xl font-bold text-slate-800 mb-6">
-                Add New Transaction
+                {editingTransaction
+                    ? "Edit Transaction"
+                    : "Add New Transaction"}
             </h2>
 
             <form onSubmit={handleSubmit}>
@@ -166,7 +218,9 @@ function TransactionForm({ onAddTransaction }) {
                 className="w-full bg-emerald-600 text-white py-3 rounded-lg
                 font-semibold hover:bg-emerald-700"
                 >
-                    Save Transaction
+                    {editingTransaction
+                        ? "Update Transaction"
+                        : "Save Transaction"}
                 </button>
             </form>
         </div>
