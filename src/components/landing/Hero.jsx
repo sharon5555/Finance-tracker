@@ -382,8 +382,14 @@ function Hero() {
                                 one TransactionCard component.
 
                                 Display only the transaction hat match the selected filter.
+
+                                Transaction list:
+                                If there are transactions that match the selected filter,
+                                display them using the reusable TransactionCard component.
+                                Otherwise, display a helpful message to the user.
                             */}
-                            {filteredTransactions.map((transaction) => (
+                            {filteredTransactions.length > 0 ? (
+                                filteredTransactions.map((transaction) => (
 
                                 <TransactionCard
                                     key={transaction.id}
@@ -400,7 +406,27 @@ function Hero() {
                                     onDelete={() => deleteTransaction(transaction.id)}
                                 />
 
-                            ))}
+                            ))
+
+                            ) : (
+
+                                // Display this message when there are no matching transactions.
+                                <div className="bg-white border border-dashed border-slate-300
+                                                rounded-2xl p-8 text-center">
+
+                                                    {/* Empty-state heading */}
+                                                    <h3 className="text-lg font-semibold text-slate-700">
+                                                        No transaction found
+                                                    </h3>
+
+                                                    {/* Empty-state heading */}
+                                                    <p className="text-sm text-slate-500 mt-2">
+                                                        {transactionFilter === "All"
+                                                            ? "Add your first transaction to start tracking your money."
+                                                            : `No ${transactionFilter.toLocaleLowerCase()} transactions found.`}
+                                                    </p>
+                                                </div>
+                            )}
 
                         </div>
 
