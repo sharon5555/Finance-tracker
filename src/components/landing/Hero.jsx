@@ -23,6 +23,10 @@ function Hero() {
     // Store all transactions created by the user.
     const [transactions, setTransactions] = useState([]);
 
+    // store the currently selected transaction filter.
+    // "All" means that every transaction should be displayed.
+    const [transactionFilter, setTransactionFilter] = useState("All");
+
     // store the transaction currently being edited.
     const [editingTransaction, setEditingTransaction] = useState(null);
 
@@ -170,6 +174,18 @@ function Hero() {
     // Savings are calculated from Income minus Expenses.
     const savings = totalIncome - totalExpenses;
 
+    // create a list of transactions based on the selected filter.
+    const filteredTransactions = transactions.filter((transaction) => {
+
+        // If "All" is selected, display every transaction.
+        if (transactionFilter === "All") {
+            return true;
+        }
+
+        // Otherwise, only display transactions matching the selected type.
+        return transaction.type === transactionFilter;
+    });
+
 
     // Create an array containing the information for our four summary cards.
     const stats = [
@@ -306,11 +322,56 @@ function Hero() {
                             Displays all transactions saved
                             by the user.
                         */}
-                        <div>
+                        <div className="mt-10">
 
                             <h2 className="text-2xl font-bold mb-4">
                                 Recent Transactions
                             </h2>
+
+                            {/* 
+                                Filter buttons: 
+                                The user can choose to see all transactions,
+                                income transactions, or expenses transactions.
+                             */}
+                            
+                            <div className="flex gap-3 mb-6">
+
+                                {/* All transactions button */}
+                                <button
+                                    onClick={() => setTransactionFilter("All")}
+                                    className={`px-4 py-2 rounded-lg font-medium ${
+                                        transactionFilter === "All" 
+                                            ? "bg-emerald-600 text-white" 
+                                            : "bg-white text-slate-600 border"
+                                    }`}
+                                >
+                                    All
+                                </button>
+
+                                {/* Income transactions buttons */}
+                                <button
+                                    onClick={() => setTransactionFilter("Income")}
+                                    className={`px-4 py-2 rounded-lg font-medium ${
+                                        transactionFilter ==="Income" 
+                                            ? "bg-emerald-600 text-white" 
+                                            : "bg-white text-slate-600 border"
+                                }`}
+                                >
+                                    Income
+                                </button>
+
+                                {/* Expenses transaction button  */}
+                                <button
+                                    onClick={() => setTransactionFilter("Expense")}
+                                    className={`px-4 py-2 rounded-lg font-medium ${
+                                        transactionFilter === "Expense"
+                                            ? "bg-emerald-600 text-white"
+                                            : "bg-white text-slate-600 border"
+                                    }`}
+                                >
+                                    Expenses
+                                </button>
+                            </div>
 
 
                             {/* 
@@ -319,8 +380,10 @@ function Hero() {
 
                                 For every transaction, React creates
                                 one TransactionCard component.
+
+                                Display only the transaction hat match the selected filter.
                             */}
-                            {transactions.map((transaction) => (
+                            {filteredTransactions.map((transaction) => (
 
                                 <TransactionCard
                                     key={transaction.id}
@@ -330,10 +393,10 @@ function Hero() {
                                     category={transaction.category}
                                     date={transaction.date}
 
-                                    // Pass the edit function to TransactionCard.
+                                    // Allow the user to edit this transaction.
                                     onEdit={() => editTransaction(transaction.id)}
 
-                                    // Pass the transaction's id to the delete function.
+                                    // Allow the user to delete this transaction.
                                     onDelete={() => deleteTransaction(transaction.id)}
                                 />
 
