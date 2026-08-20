@@ -213,15 +213,48 @@ function TransactionForm({
                     />
                 </div>
 
-                <button
-                type="submit"
-                className="w-full bg-emerald-600 text-white py-3 rounded-lg
-                font-semibold hover:bg-emerald-700"
-                >
-                    {editingTransaction
-                        ? "Update Transaction"
-                        : "Save Transaction"}
-                </button>
+                    {/* 
+                        Form action buttons:
+                        The main button saves or updates the transaction.
+                        The Cancel button only appears while editing.
+                    */}
+                    <div className="flex gap-3">
+
+                    {/* 
+                        Save/Update button:
+                        Changes its text depending on whether
+                        the user is adding or editing.
+                    */}
+                    <button
+                        type="submit"
+                        className="flex-1 bg-emerald-600 text-white py-3 rounded-lg
+                        font-semibold hover:bg-emerald-700"
+                    >
+                        {editingTransaction
+                            ? "Update Transaction"
+                            : "Save Transaction"}
+                    </button>
+
+
+                    {/* 
+                        Cancel button:
+                        Only appears when the user is editing a transaction.
+                    */}
+                    {editingTransaction && (
+                        <button
+                            type="button"
+
+                            // Exit edit mode without saving changes.
+                            onClick={onFinishEditing}
+
+                            className="flex-1 bg-slate-200 text-slate-700 py-3 rounded-lg
+                            font-semibold hover:bg-slate-300"
+                        >
+                            Cancel
+                        </button>
+                        )}
+
+                    </div>
             </form>
         </div>
     );
