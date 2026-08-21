@@ -148,6 +148,10 @@ function Hero() {
         return transaction.type === transactionFilter;
     });
 
+    // Show only the five most recent transaction.
+    // The full transaction list is still stored in transactions.
+    const recentTransactions = filteredTransactions.slice(-5).reverse()
+
 
     // Create an array containing the information for our four summary cards.
     const stats = [
@@ -369,7 +373,7 @@ function Hero() {
                                 Otherwise, display a helpful message to the user.
                             */}
                             {filteredTransactions.length > 0 ? (
-                                filteredTransactions.map((transaction) => (
+                                recentTransactions.map((transaction) => (
 
                                 <TransactionCard
                                     key={transaction.id}
