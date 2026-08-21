@@ -18,7 +18,7 @@ function Hero() {
 
     // Store the user's current balance.
     // We start with an initial balance of ₦250,000.
-    const [balance, setBalance] = useState(250000);
+    const startingBalance = 250000;
 
     // Store all transactions created by the user.
     const [transactions, setTransactions] = useState([]);
@@ -43,23 +43,6 @@ function Hero() {
         // we are editing an existing transaction.
         if (existingTransaction) {
 
-            // calculate the balance before the old transaction was added.
-            let updatedBalance = balance;
-
-            // Remove the effect of the old transaction.
-            if (existingTransaction.type === "Income") {
-                updatedBalance -= Number(existingTransaction.amount);
-            } else {
-                updatedBalance += Number(existingTransaction.amount);
-            }
-
-            // Add the effect of the updated transaction.
-            if (transaction.type === "Income") {
-                updatedBalance += Number(transaction.amount);
-            } else {
-                updatedBalance -= Number(transaction.amount);
-            }
-
             // Replace the old transaction with the updated transaction.
             setTransactions(
                 transactions.map((item) =>
@@ -69,23 +52,13 @@ function Hero() {
                 )
             );
 
-            // Update the balance.
-            setBalance(updatedBalance);
-
-        } else {
-
-            // If the transaction doesn't already exist,
-            // Add it as a new transaction.
-            setTransactions([...transactions, transaction]);
-
-            // Update the balance for the new transaction.
-            if (transaction.type === "Income") {
-                setBalance(balance + Number(transaction.amount));
-            } else {
-                setBalance(balance - Number(transaction.amount));
-            }
+            return;
 
         }
+
+        // If the transaction does not exist,
+        // add it to the transaction array.
+        setTransactions([...transactions, transaction]);
     }
 
     // Stop editing the current transaction.
@@ -98,13 +71,13 @@ function Hero() {
     // This function removes a transaction from the transactions array.
     function deleteTransaction(id) {
 
-        //find the transaction that the user wants to delete.
-        const transactionToDelete = transactions.find(
-            (transaction) => transaction.id === id
+        // Ask the user to confirm before permanently deleting the transaction.
+        const confirmDelete = window.confirm(
+            "Are you sure you want to delete this transaction?"
         );
 
-        // If the transaction cannot be found, stop the function.
-        if(!transactionToDelete) {
+        //If the user clicks cancel, stop the function.
+        if (!confirmDelete) {
             return;
         }
 
@@ -114,21 +87,6 @@ function Hero() {
                 (transaction) => transaction.id !== id
             )
         );
-
-        // Reverse the effect that the transaction had on the balance.
-        if (transactionToDelete.type === "Income") {
-
-            //If is was income, substract it from the balance.
-            setBalance(
-                balance - Number(transactionToDelete.amount)
-            );
-        } else {
-
-            //If it was an expense, add it back to the balance.
-            setBalance(
-                balance + Number(transactionToDelete.amount)
-            );
-        }
 
     }
 
@@ -170,6 +128,10 @@ function Hero() {
             0
         );
 
+    // Calculate the current balance.
+    // Start with the original balance,
+    // then add income and subtract expenses.
+    const balance = startingBalance + totalIncome - totalExpenses;
 
     // Savings are calculated from Income minus Expenses.
     const savings = totalIncome - totalExpenses;

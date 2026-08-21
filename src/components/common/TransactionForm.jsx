@@ -30,6 +30,11 @@ function TransactionForm({
 
         // Only run this when a transaction has been selected for editing.
         if (!editingTransaction) {
+            setTitle("");
+            setAmount("");
+            setType("Income");
+            setCategory("Salary");
+            setDate("");
             return;
         }
 
