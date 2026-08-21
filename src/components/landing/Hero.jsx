@@ -283,12 +283,30 @@ function Hero() {
                             Recent Transactions:
                             Displays all transactions saved
                             by the user.
+                            Shows the number of transactions currently being displayed.
                         */}
                         <div className="mt-10">
 
-                            <h2 className="text-2xl font-bold mb-4">
-                                Recent Transactions
-                            </h2>
+                            <div className="flex items-center justify-between mb-4">
+                                
+                                {/* Main section heading */}
+                                <h2 className="text-2xl font-bold">
+                                    Recent Transactions
+                                </h2>
+
+                                {/*
+                                    Transaction count: 
+                                    Shows how many transactions match the selected filter.
+                                 */}
+
+                                <span className="text-sm text-slate-500">
+                                    {filteredTransactions.length}{" "}
+                                    {filteredTransactions.length === 1
+                                        ? "transaction"
+                                        : "transactions"}
+                                </span>
+
+                            </div>
 
                             {/* 
                                 Filter buttons: 
