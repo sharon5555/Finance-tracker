@@ -18,6 +18,10 @@ import TransactionForm from "../common/TransactionForm";
 // Expenses, and Savings.
 import DashboardSummary from "../common/DashboardSummary";
 
+// Import chart component.
+import FinanceChart from "../charts/FinanceChart";
+import ExpenseChart from "../charts/ExpenseChart";
+
 
 function Hero() {
 
@@ -34,28 +38,59 @@ function Hero() {
      */
     const [transactions, setTransactions] = useState(() => {
 
-        const savedTransactions = localStorage.getItem(
-            "finflow_transactions"
+        // Get saved FinFlow data from the browser.
+        const savedData = localStorage.getItem(
+            "finflow_data"
         );
 
-        return savedTransactions 
-            ? JSON.parse(savedTransactions) 
-            : [];
+        // if data exists:
+        // convert it back from text into JavaScript.
+        if (savedData) {
+
+            const parsedData = JSON.parse(savedData);
+
+            // Make sure transactions is always an array.
+            // This prevents errors like:
+            // Cannot read properties of undefined (reading 'filter')
+            return Array.isArray(parsedData.transactions) 
+                ? parsedData.transactions 
+                : [];
+        }
+
+        // If there is no saved data, start with an empty array.
+        return [];
     });
 
     /* 
-        save transactions everytime the transactions array changes.
+        Save all FinFlow data whenever transactions change.
 
-        JSON.stringify converts the JavaScript array
-        into text because localStorage only stores text.
+        We store an object so we can add more data later:
+        - transactions
+        - user settings
+        - financial goals
+        - preferences
     */
-
     useEffect(() => {
+
+        const finflowData = {
+
+            // save all user transactions.
+            transactions: transactions,
+
+            // placeholder for future settings.
+            settings:{}
+
+        };
+
+        // convert the object into text
+        // because localStorage stores only text.
         localStorage.setItem(
-            "finflow_transactions",
-            JSON.stringify(transactions)
+            "finflow_data",
+            JSON.stringify(finflowData)
         );
+
     }, [transactions]);
+
 
     // Store the currently selected transaction filter.
     // "All" means that every transaction should be displayed.
@@ -176,6 +211,20 @@ function Hero() {
     // Calculate savings.
     // Savings = total income - total expenses.
     const savings = totalIncome - totalExpenses;
+
+    /*
+    Get only expense transactions.
+
+    The ExpenseChart does not need:
+    - Income
+    - Salary
+    - Freelance
+
+    It only needs expenses.
+    */
+    const expenseTransactions = transactions.filter(
+        (transaction) => transaction.type === "Expenses"
+    );
 
 
     // Create a list of transactions based on the selected filter.
@@ -301,6 +350,35 @@ function Hero() {
 
                         <DashboardSummary stats={stats} />
 
+                    </div>
+
+
+                    {/*
+                        Finance Chart:
+
+                        Displays a visual comparison
+                        between total income and total expenses.
+                    */}
+                    <div className="mt-10">
+
+                        <FinanceChart
+                            income={totalIncome}
+                            expenses={totalExpenses}
+                        />
+
+                    </div>
+
+                    {/*
+                        Expense Chart:
+
+                        shows where the user's money is being spent by category.
+                    */}
+                    <div className="mt-10">
+
+                        <ExpenseChart
+                            expenses={expenseTransactions}
+                        />
+                        
                     </div>
 
 
