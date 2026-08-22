@@ -80,23 +80,38 @@ function FinanceChart({ income, expenses }) {
 
         plugins: {
 
+            //Hide the default Chart.js legend.
             legend: {
                 display: false
-            },
-
-            title: {
-
-                display: true,
-
-                text: "Income vs Expenses"
             }
+
         }
     };
 
     return (
 
-        <div className="bg-white rounded-2xl shadow-md p-6">
+        /*
+            Finance chart card: 
+            Create a clean dashboard-style container around the 
+            income vs expenses chart.
+        */
 
+        <div className="bg-white rounded-2xl border border-slate-100 shadow-md p-6">
+
+            {/* Chart heading */}
+            <div className="mb-5">
+
+                <h2 className="text-xl font-bold text-slate-800">
+                    Income vs Expenses
+                </h2>
+
+                <p className="text-sm text-slate-500 mt-1">
+                    Compare your income and spending.
+                </p>
+
+            </div>
+
+            {/* Chart */}
             <Bar 
                 data={data}
                 options={options}

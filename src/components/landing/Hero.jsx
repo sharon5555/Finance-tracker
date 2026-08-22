@@ -21,6 +21,7 @@ import DashboardSummary from "../common/DashboardSummary";
 // Import chart component.
 import FinanceChart from "../charts/FinanceChart";
 import ExpenseChart from "../charts/ExpenseChart";
+import MonthlySummary from "../charts/MonthlySummary";
 
 
 function Hero() {
@@ -359,24 +360,43 @@ function Hero() {
                         Displays a visual comparison
                         between total income and total expenses.
                     */}
-                    <div className="mt-10">
+                    < div className="mt-10 grid grid-cols-1 lg:grid-cols-2 gap-8">
+
+                        {/*
+                            Income vs Expenses🧮 shows how much money came in
+                            compared with how much was spent.
+                        */}
 
                         <FinanceChart
                             income={totalIncome}
                             expenses={totalExpenses}
                         />
 
-                    </div>
 
                     {/*
                         Expense Chart:
 
                         shows where the user's money is being spent by category.
                     */}
-                    <div className="mt-10">
 
                         <ExpenseChart
                             expenses={expenseTransactions}
+                        />
+                        
+                    </div>
+
+                    {/*
+                        Monthly Summary:
+
+                        Displays the current income,
+                        expenses, and savings totals.
+                    */}
+                    <div className="mt-8">
+
+                        <MonthlySummary
+                            income={totalIncome}
+                            expenses={totalExpenses}
+                            savings={savings}
                         />
                         
                     </div>

@@ -77,11 +77,31 @@ function ExpenseChart({ expenses }) {
 
     return (
 
-        <div className="bg-white rounded-2xl shadow-md p-6">
+        /*
+            Expense chart card: 
 
-            <h2 className="text-xl font-bold mb-4 text-slate-800">
-                Expense Breakdown
-            </h2>
+            Create a clean dashboard-style container for
+            the expense category chart. 
+        */
+
+        <div className="bg-white rounded-2xl border border-slate-100 shadow-md p-6">
+
+            <div className="mb-5">
+
+                <h2 className="text-xl font-bold mb-4 text-slate-800">
+                    Expense Breakdown
+                </h2>
+
+                <p className="text-sm text-slate-500 mt-1">
+                    See where your money is being spent.
+                </p>
+                
+            </div>
+
+            {/* 
+                Only display the pie chart when expense 
+                transactions exist.
+            */}
 
             {
                 expenses.length > 0 ? (
@@ -90,9 +110,20 @@ function ExpenseChart({ expenses }) {
 
                 ) : (
 
-                    <p className="text-slate-500 text-center">
+                    /*
+                        Empty state: 
+
+                        Shows a friendly message when the user 
+                        has not added an expense.
+                    */
+
+                    <div className="h-64 flex items-center justify-center">
+
+                        <p className="text-slate-500 text-center">
                         No expense data yet.
                     </p>
+
+                    </div>
                 )
             }
         </div>
