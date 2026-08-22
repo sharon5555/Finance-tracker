@@ -1,6 +1,6 @@
 // Import useState so we can store and update transactions,
 // the selected filter, and the transaction being edited.
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 //Import an icon for the empty transaction state.
 import { FiInbox } from "react-icons/fi";
@@ -26,7 +26,36 @@ function Hero() {
     const startingBalance = 250000;
 
     // Store all transactions created by the user.
-    const [transactions, setTransactions] = useState([]);
+    /*
+        When FinFlow opens:
+        - check if saved transactions exist in localStorage.
+        - if they exist, load them.
+        - if not, start with an empty array.
+     */
+    const [transactions, setTransactions] = useState(() => {
+
+        const savedTransactions = localStorage.getItem(
+            "finflow_transactions"
+        );
+
+        return savedTransactions 
+            ? JSON.parse(savedTransactions) 
+            : [];
+    });
+
+    /* 
+        save transactions everytime the transactions array changes.
+
+        JSON.stringify converts the JavaScript array
+        into text because localStorage only stores text.
+    */
+
+    useEffect(() => {
+        localStorage.setItem(
+            "finflow_transactions",
+            JSON.stringify(transactions)
+        );
+    }, [transactions]);
 
     // Store the currently selected transaction filter.
     // "All" means that every transaction should be displayed.
