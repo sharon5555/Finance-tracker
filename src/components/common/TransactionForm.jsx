@@ -233,7 +233,8 @@ function TransactionForm({
                     <button
                         type="submit"
                         className="flex-1 bg-emerald-600 text-white py-3 rounded-lg
-                        font-semibold hover:bg-emerald-700"
+                        font-semibold shadow-sm hover:bg-emerald-700 transition-all duration-200
+                        hover:shadow-md"
                     >
                         {editingTransaction
                             ? "Update Transaction"
@@ -253,7 +254,8 @@ function TransactionForm({
                             onClick={onFinishEditing}
 
                             className="flex-1 bg-slate-200 text-slate-700 py-3 rounded-lg
-                            font-semibold hover:bg-slate-300"
+                            font-semibold border border-slate-200 hover:bg-slate-200
+                            transition-al duration-200"
                         >
                             Cancel
                         </button>

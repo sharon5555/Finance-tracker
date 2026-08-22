@@ -1,5 +1,9 @@
-// Import useState so we can store and update the balance and transactions.
+// Import useState so we can store and update transactions,
+// the selected filter, and the transaction being edited.
 import { useState } from "react";
+
+//Import an icon for the empty transaction state.
+import { FiInbox } from "react-icons/fi";
 
 // Import the reusable Button component.
 import Button from "../common/button";
@@ -7,40 +11,42 @@ import Button from "../common/button";
 // Import the reusable TransactionCard component.
 import TransactionCard from "../common/TransactionCard";
 
-// Import the form used to create new transactions.
+// Import the form used to create and edit transactions.
 import TransactionForm from "../common/TransactionForm";
 
-// Import the component that displays Balance, Income, Expenses, and Savings.
+// Import the component that displays Balance, Income,
+// Expenses, and Savings.
 import DashboardSummary from "../common/DashboardSummary";
 
 
 function Hero() {
 
-    // Store the user's current balance.
+    // Store the user's starting balance.
     // We start with an initial balance of ₦250,000.
     const startingBalance = 250000;
 
     // Store all transactions created by the user.
     const [transactions, setTransactions] = useState([]);
 
-    // store the currently selected transaction filter.
+    // Store the currently selected transaction filter.
     // "All" means that every transaction should be displayed.
     const [transactionFilter, setTransactionFilter] = useState("All");
 
-    // store the transaction currently being edited.
+    // Store the transaction currently being edited.
+    // null means that no transaction is being edited.
     const [editingTransaction, setEditingTransaction] = useState(null);
 
 
-    // This function runs whenever a new transaction is submitted.
+    // Add a new transaction or update an existing transaction.
     function addTransaction(transaction) {
 
-        // check whether the transaction already exists.
+        // Check whether this transaction already exists.
         const existingTransaction = transactions.find(
             (item) => item.id === transaction.id
         );
 
         // If the transaction already exists,
-        // we are editing an existing transaction.
+        // replace it with the updated transaction.
         if (existingTransaction) {
 
             // Replace the old transaction with the updated transaction.
@@ -52,45 +58,47 @@ function Hero() {
                 )
             );
 
+            // Stop the function after updating the transaction.
             return;
-
         }
 
         // If the transaction does not exist,
-        // add it to the transaction array.
+        // add it to the transactions array.
         setTransactions([...transactions, transaction]);
     }
+
 
     // Stop editing the current transaction.
     function finishEditing() {
 
-        // clear the editing transaction.
+        // Clear the currently edited transaction.
         setEditingTransaction(null);
     }
 
-    // This function removes a transaction from the transactions array.
+
+    // Delete a transaction from the transactions array.
     function deleteTransaction(id) {
 
-        // Ask the user to confirm before permanently deleting the transaction.
+        // Ask the user to confirm before deleting the transaction.
         const confirmDelete = window.confirm(
             "Are you sure you want to delete this transaction?"
         );
 
-        //If the user clicks cancel, stop the function.
+        // If the user clicks Cancel, stop the function.
         if (!confirmDelete) {
             return;
         }
 
-        //Remove the selected transaction from the array.
+        // Remove the transaction with the matching ID.
         setTransactions(
             transactions.filter(
                 (transaction) => transaction.id !== id
             )
         );
-
     }
 
-    // This function finds a transaction and prepare it to be edited.
+
+    // Find a transaction and prepare it for editing.
     function editTransaction(id) {
 
         // Find the transaction that the user wants to edit.
@@ -99,17 +107,19 @@ function Hero() {
         );
 
         // If the transaction does not exist, stop the function.
-        if(!transactionToEdit) {
+        if (!transactionToEdit) {
             return;
         }
 
-        //store the transaction so TransactionForm can use its information.
+        // Store the transaction so TransactionForm
+        // can display its information.
         setEditingTransaction(transactionToEdit);
     }
 
+
     // Calculate the total amount of all Income transactions.
-    // filter() keeps only transactions whose type is "Income".
-    // reduce() adds all of those income amounts together.
+    // filter() keeps only Income transactions.
+    // reduce() adds all income amounts together.
     const totalIncome = transactions
         .filter((transaction) => transaction.type === "Income")
         .reduce(
@@ -119,8 +129,8 @@ function Hero() {
 
 
     // Calculate the total amount of all Expense transactions.
-    // filter() keeps only transactions whose type is "Expense".
-    // reduce() adds all of those expense amounts together.
+    // filter() keeps only Expense transactions.
+    // reduce() adds all expense amounts together.
     const totalExpenses = transactions
         .filter((transaction) => transaction.type === "Expense")
         .reduce(
@@ -128,15 +138,18 @@ function Hero() {
             0
         );
 
+
     // Calculate the current balance.
-    // Start with the original balance,
-    // then add income and subtract expenses.
+    // Starting balance + income - expenses.
     const balance = startingBalance + totalIncome - totalExpenses;
 
-    // Savings are calculated from Income minus Expenses.
+
+    // Calculate savings.
+    // Savings = total income - total expenses.
     const savings = totalIncome - totalExpenses;
 
-    // create a list of transactions based on the selected filter.
+
+    // Create a list of transactions based on the selected filter.
     const filteredTransactions = transactions.filter((transaction) => {
 
         // If "All" is selected, display every transaction.
@@ -144,16 +157,25 @@ function Hero() {
             return true;
         }
 
-        // Otherwise, only display transactions matching the selected type.
+        // Otherwise, only display transactions
+        // matching the selected type.
         return transaction.type === transactionFilter;
     });
 
-    // Show only the five most recent transaction.
-    // The full transaction list is still stored in transactions.
-    const recentTransactions = filteredTransactions.slice(-5).reverse()
+    // Sort transactions by date:
+    // Newest transactions appear first.
+    const sortedTransactions = [...filteredTransactions].sort(
+        (a, b) => new Date(b.date) - new Date(a.date)
+    );
 
 
-    // Create an array containing the information for our four summary cards.
+    // Show only the five most recent transactions.
+    // The full transaction list remains stored in transactions.
+    const recentTransactions = sortedTransactions.slice(0, 5);
+
+
+    // Create an array containing the information
+    // for our four dashboard summary cards.
     const stats = [
 
         // Display the user's current balance.
@@ -163,21 +185,21 @@ function Hero() {
             color: "text-emerald-600",
         },
 
-        // Display the total income calculated from transactions.
+        // Display the total income.
         {
             title: "Total Income",
             amount: `₦${totalIncome.toLocaleString()}`,
             color: "text-blue-600",
         },
 
-        // Display the total expenses calculated from transactions.
+        // Display the total expenses.
         {
             title: "Total Expenses",
             amount: `₦${totalExpenses.toLocaleString()}`,
             color: "text-red-600",
         },
 
-        // Display the amount left after subtracting expenses from income.
+        // Display savings.
         {
             title: "Savings",
             amount: `₦${savings.toLocaleString()}`,
@@ -190,43 +212,42 @@ function Hero() {
     return (
         <section className="bg-slate-50">
 
-            {/* 
+            {/*
                 Main container:
-                Keeps our content centered and gives it
-                horizontal and vertical spacing.
+                Keeps the content centered and adds spacing.
             */}
             <div className="max-w-7xl mx-auto px-6 py-24">
 
-                {/* 
-                    Main Content:
+                {/*
+                    Main content:
                     Contains the welcome message, buttons,
-                    dashboard summary, and transaction area.
+                    dashboard summary, transaction form,
+                    and recent transactions.
                 */}
                 <div>
 
-                    {/* Welcome message shown at the top of the page. */}
+                    {/* Welcome message. */}
                     <p className="text-emerald-600 font-semibold mb-3">
                         Welcome to Finflow
                     </p>
 
 
-                    {/* Main heading of the FinFlow page. */}
+                    {/* Main page heading. */}
                     <h1 className="text-5xl lg:text-6xl font-bold text-slate-900 leading-tight">
                         Take Control of Your Money Today
                     </h1>
 
 
-                    {/* Short description explaining what FinFlow does. */}
+                    {/* Short description of FinFlow. */}
                     <p className="mt-6 text-lg text-slate-600">
                         Track your income, expenses, savings, and financial goals in one
                         beautiful and secure application.
                     </p>
 
 
-                    {/* 
-                        Main buttons:
-                        These are currently our Get Started
-                        and Learn More buttons.
+                    {/*
+                        Main action buttons:
+                        Get Started and Learn More.
                     */}
                     <div className="mt-10 flex gap-5">
 
@@ -243,10 +264,9 @@ function Hero() {
                     </div>
 
 
-                    {/* 
+                    {/*
                         Dashboard Summary:
-                        Displays our four financial statistics:
-                        Balance, Income, Expenses, and Savings.
+                        Displays Balance, Income, Expenses, and Savings.
                     */}
                     <div className="mt-10">
 
@@ -255,26 +275,23 @@ function Hero() {
                     </div>
 
 
-                    {/* 
+                    {/*
                         Transaction Area:
                         Contains the transaction form and
-                        the list of recent transactions.
+                        recent transactions.
 
                         On small screens:
-                        The sections appear one below another.
+                        They appear one below another.
 
                         On large screens:
-                        The sections appear side-by-side.
+                        They appear side-by-side.
                     */}
                     <div className="mt-10 grid grid-cols-1 lg:grid-cols-2 gap-8">
 
 
-                        {/* 
+                        {/*
                             Transaction Form:
-                            Allows the user to enter and save
-                            a new income or expense.
-                            Receives the transaction being edited.
-                            If editingTransaction is null, the form works normally.
+                            Allows the user to add or edit transactions.
                         */}
                         <TransactionForm
                             onAddTransaction={addTransaction}
@@ -283,134 +300,173 @@ function Hero() {
                         />
 
 
-                        {/* 
+                        {/*
                             Recent Transactions:
-                            Displays all transactions saved
-                            by the user.
-                            Shows the number of transactions currently being displayed.
+                            Displays the user's recent transactions.
                         */}
                         <div className="mt-10">
 
+                            {/*
+                                Section heading:
+                                Displays the title and number
+                                of transactions currently shown.
+                            */}
                             <div className="flex items-center justify-between mb-4">
-                                
-                                {/* Main section heading */}
+
+                                {/* Recent transactions heading. */}
                                 <h2 className="text-2xl font-bold">
                                     Recent Transactions
                                 </h2>
 
                                 {/*
-                                    Transaction count: 
-                                    Shows how many transactions match the selected filter.
-                                 */}
-
+                                    Transaction count:
+                                    Shows how many transactions are
+                                    currently displayed.
+                                */}
                                 <span className="text-sm text-slate-500">
-                                    {filteredTransactions.length}{" "}
-                                    {filteredTransactions.length === 1
+                                    {recentTransactions.length}{" "}
+                                    {recentTransactions.length === 1
                                         ? "transaction"
                                         : "transactions"}
                                 </span>
 
                             </div>
 
-                            {/* 
-                                Filter buttons: 
-                                The user can choose to see all transactions,
-                                income transactions, or expenses transactions.
-                             */}
-                            
-                            <div className="flex gap-3 mb-6">
 
-                                {/* All transactions button */}
+                            {/*
+                                Filter buttons:
+                                Allow the user to display
+                                All, Income, or Expenses.
+                            */}
+                            <div className="flex flex-wrap gap-2 mb-6">
+
+                                {/* All transactions button. */}
                                 <button
                                     onClick={() => setTransactionFilter("All")}
-                                    className={`px-4 py-2 rounded-lg font-medium ${
-                                        transactionFilter === "All" 
-                                            ? "bg-emerald-600 text-white" 
-                                            : "bg-white text-slate-600 border"
+                                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                                        transactionFilter === "All"
+                                            ? "bg-emerald-600 text-white shadow-sm"
+                                            : "bg-white text-slate-600 border border-slate-200 hover:big-slate-50"
                                     }`}
                                 >
                                     All
                                 </button>
 
-                                {/* Income transactions buttons */}
+
+                                {/* Income transactions button. */}
                                 <button
                                     onClick={() => setTransactionFilter("Income")}
-                                    className={`px-4 py-2 rounded-lg font-medium ${
-                                        transactionFilter ==="Income" 
-                                            ? "bg-emerald-600 text-white" 
-                                            : "bg-white text-slate-600 border"
-                                }`}
+                                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                                        transactionFilter === "Income"
+                                            ? "bg-emerald-600 text-white shadow-sm"
+                                            : "bg-white text-slate-600 border border-slate-200 hover:bg-slate-50"
+                                    }`}
                                 >
                                     Income
                                 </button>
 
-                                {/* Expenses transaction button  */}
+
+                                {/* Expense transactions button. */}
                                 <button
                                     onClick={() => setTransactionFilter("Expense")}
-                                    className={`px-4 py-2 rounded-lg font-medium ${
+                                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
                                         transactionFilter === "Expense"
-                                            ? "bg-emerald-600 text-white"
-                                            : "bg-white text-slate-600 border"
+                                            ? "bg-emerald-600 text-white shadow-sm"
+                                            : "bg-white text-slate-600 border border-slate-200 hover:bg-slate-50"
                                     }`}
                                 >
                                     Expenses
                                 </button>
+
                             </div>
 
 
-                            {/* 
-                                map() goes through every transaction
-                                in the transactions array.
-
-                                For every transaction, React creates
-                                one TransactionCard component.
-
-                                Display only the transaction hat match the selected filter.
-
+                            {/*
                                 Transaction list:
-                                If there are transactions that match the selected filter,
-                                display them using the reusable TransactionCard component.
-                                Otherwise, display a helpful message to the user.
+                                max-h-[500px] prevents the list from
+                                making the page extremely tall.
+
+                                overflow-y-auto adds a vertical scrollbar
+                                when the content becomes taller than 500px.
                             */}
-                            {filteredTransactions.length > 0 ? (
-                                recentTransactions.map((transaction) => (
+                            <div className="max-h-[500px] overflow-y-auto pr-2">
 
-                                <TransactionCard
-                                    key={transaction.id}
-                                    title={transaction.title}
-                                    amount={transaction.amount}
-                                    type={transaction.type}
-                                    category={transaction.category}
-                                    date={transaction.date}
+                                {/*
+                                    Check whether there are transactions
+                                    to display.
+                                */}
+                                {recentTransactions.length > 0 ? (
 
-                                    // Allow the user to edit this transaction.
-                                    onEdit={() => editTransaction(transaction.id)}
+                                    /*
+                                        Display each recent transaction
+                                        using the reusable TransactionCard.
+                                    */
+                                    recentTransactions.map((transaction) => (
 
-                                    // Allow the user to delete this transaction.
-                                    onDelete={() => deleteTransaction(transaction.id)}
-                                />
+                                        <TransactionCard
+                                            key={transaction.id}
+                                            title={transaction.title}
+                                            amount={transaction.amount}
+                                            type={transaction.type}
+                                            category={transaction.category}
+                                            date={transaction.date}
 
-                            ))
+                                            // Allow the user to edit this transaction.
+                                            onEdit={() =>
+                                                editTransaction(transaction.id)
+                                            }
 
-                            ) : (
+                                            // Allow the user to delete this transaction.
+                                            onDelete={() =>
+                                                deleteTransaction(transaction.id)
+                                            }
+                                        />
 
-                                // Display this message when there are no matching transactions.
-                                <div className="bg-white border border-dashed border-slate-300
-                                                rounded-2xl p-8 text-center">
+                                    ))
 
-                                                    {/* Empty-state heading */}
-                                                    <h3 className="text-lg font-semibold text-slate-700">
-                                                        No transaction found
-                                                    </h3>
+                                ) : (
 
-                                                    {/* Empty-state heading */}
-                                                    <p className="text-sm text-slate-500 mt-2">
-                                                        {transactionFilter === "All"
-                                                            ? "Add your first transaction to start tracking your money."
-                                                            : `No ${transactionFilter.toLocaleLowerCase()} transactions found.`}
-                                                    </p>
+                                    /*
+                                        Empty state:
+                                        Display this when there are no
+                                        transactions matching the filter.
+                                    */
+                                    <div
+                                        className="bg-white border border-dashed
+                                        border-slate-300 rounded-2xl p-8 text-center"
+                                    >
+
+                                        {/*
+                                            Empty-state icon:
+                                            Gives the user a visual indication that there are 
+                                            currently no transactions.
+
+                                         */}
+
+                                        <div className="flex justify-center mb-4">
+                                            <div className="w-14 h-14 rounded-full bg-slate-100
+                                                flex items-center justify-center">
+                                                    <FiInbox className="text-slate-400 text-2xl" />
                                                 </div>
-                            )}
+
+                                        </div>
+
+                                        {/* Empty-state heading. */}
+                                        <h3 className="text-lg font-semibold text-slate-700">
+                                            No transaction found
+                                        </h3>
+
+                                        {/* Empty-state description. */}
+                                        <p className="text-sm text-slate-500 mt-2">
+                                            {transactionFilter === "All"
+                                                ? "Add your first transaction to start tracking your money."
+                                                : `No ${transactionFilter.toLowerCase()} transactions found.`}
+                                        </p>
+
+                                    </div>
+                                )}
+
+                            </div>
 
                         </div>
 
