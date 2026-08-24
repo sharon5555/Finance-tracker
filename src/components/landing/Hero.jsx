@@ -2,21 +2,31 @@
 // the selected filter, and the transaction being edited.
 import { useEffect, useState } from "react";
 
+
 //Import an icon for the empty transaction state.
 import { FiInbox } from "react-icons/fi";
+
 
 // Import the reusable Button component.
 import Button from "../common/button";
 
+
 // Import the reusable TransactionCard component.
 import TransactionCard from "../common/TransactionCard";
+
 
 // Import the form used to create and edit transactions.
 import TransactionForm from "../common/TransactionForm";
 
+
 // Import the component that displays Balance, Income,
 // Expenses, and Savings.
 import DashboardSummary from "../common/DashboardSummary";
+
+
+// Import the component that displays financial goal progress.
+import GoalCard from "../common/GoalCard";
+import GoalForm from "../common/GoalForm";
 
 // Import chart component.
 import FinanceChart from "../charts/FinanceChart";
@@ -24,11 +34,15 @@ import ExpenseChart from "../charts/ExpenseChart";
 import MonthlySummary from "../charts/MonthlySummary";
 
 
+
+//   PART A
+
 function Hero() {
 
     // Store the user's starting balance.
     // We start with an initial balance of ₦250,000.
     const startingBalance = 250000;
+
 
     // Store all transactions created by the user.
     /*
@@ -62,6 +76,9 @@ function Hero() {
         return [];
     });
 
+
+    // PART B
+
     /* 
         Save all FinFlow data whenever transactions change.
 
@@ -93,6 +110,9 @@ function Hero() {
     }, [transactions]);
 
 
+        // PART C
+
+
     // Store the currently selected transaction filter.
     // "All" means that every transaction should be displayed.
     const [transactionFilter, setTransactionFilter] = useState("All");
@@ -100,6 +120,61 @@ function Hero() {
     // Store the transaction currently being edited.
     // null means that no transaction is being edited.
     const [editingTransaction, setEditingTransaction] = useState(null);
+
+    /*
+        Temporary financial goal.
+
+        We are using one sample goal first
+        to make sure GoalCard works correctly.
+
+        Later we will replace this with:
+        - multiple goals
+        - a goal form
+        - adding money to goals
+        - localStorage
+    */
+    const [goals, setGoals] = useState([]);
+
+    /*
+        Add a new financial goal to the goal list.
+
+        GoalForm sends the new goal here.
+    */
+    function addGoal(goal) {
+
+        // Add the new goal to the existing goals.
+        setGoals([...goals, goal]);
+    }
+
+    /*
+    Add money to a specific financial goal.
+
+    GoalCard sends the amount the user entered.
+    This function finds the correct goal and
+    increases its current amount.
+*/
+    function addMoneyToGoal(goalId, amount) {
+
+        setGoals(
+            goals.map((goal) => {
+
+                // Find the goal that the user is updating.
+                if (goal.id === goalId) {
+
+                    // Increase the amount saved toward the goal.
+                    return {
+                        ...goal,
+                        currentAmount: goal.currentAmount + amount
+                    };
+                }
+
+                // Leave all other goals unchanged.
+                return goal;
+            })
+        );
+    }
+
+        // PART D
 
 
     // Add a new transaction or update an existing transaction.
@@ -132,6 +207,8 @@ function Hero() {
         setTransactions([...transactions, transaction]);
     }
 
+        // PART E
+
 
     // Stop editing the current transaction.
     function finishEditing() {
@@ -161,6 +238,9 @@ function Hero() {
             )
         );
     }
+
+
+        // PART F
 
 
     // Find a transaction and prepare it for editing.
@@ -287,6 +367,8 @@ function Hero() {
     ];
 
 
+        // PART G
+
     // Return the main Hero section of the FinFlow page.
     return (
         <section className="bg-slate-50">
@@ -398,8 +480,77 @@ function Hero() {
                             expenses={totalExpenses}
                             savings={savings}
                         />
-                        
+
                     </div>
+
+                    {/*
+                        Financial Goal:
+
+                        Displays the user's progress
+                        toward the current financial goal.
+                    */}
+                    <div className="mt-8 grid-cols-1 lg:grid-cols-2 gap-8">
+
+                        {/* Create Goal Form */}
+                        <GoalForm
+                            onAddGoal={addGoal}
+                        />
+
+
+                        {/* Existing Goals */}
+                        <div className="space-y-4">
+
+                            <h2 className="text-x1 font-bold text-slate-800">
+                                Your Financial Goals
+                            </h2>
+
+
+
+                            {/* 
+                                Display each financial goal.
+
+                                GoalCard sends the amount to add back
+                                to this component through addMoneyToGoal.
+                            */}
+
+                            {goals.length > 0 ? (
+
+                                goals.map((goal) => (
+                            
+
+                                    <GoalCard
+                                        key={goal.id}
+                                        name={goal.name}
+                                        targetAmount={goal.targetAmount}
+                                        currentAmount={goal.currentAmount}
+                                        onAddMoney={(amount) => 
+                                            addMoneyToGoal(goal.id, amount)
+                                        }
+                                    />
+                                ))
+
+                            ) : (
+
+                                <div className="bg-white rounded-2xl border border-dashed
+                                    border-slate-300 p-8 text-center">
+
+                                        <h3 className="font-semibold text-slate-700">
+                                            No financial goals yet
+                                        </h3>
+
+                                        <p className="text-sm text-slate-500 mt-2">
+                                            Create your first goal to start tracking your progress.
+                                        </p>
+                                    </div>
+
+                            )}
+
+                        </div>
+
+                    </div>
+
+
+                                {/* PART H */}
 
 
                     {/*
