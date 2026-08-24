@@ -11,7 +11,9 @@ function GoalCard({
     name,
     targetAmount,
     currentAmount,
-    onAddMoney
+    onAddMoney,
+    onDelete,
+    onEdit
 }) {
 
     // Store the amount the user wants to add.
@@ -171,6 +173,38 @@ function GoalCard({
                 </form>
 
             )}
+
+
+            {/*
+                Goal action buttons:
+
+                Edit allows the user to change the goal.
+                Delete removes the goal.
+            */}
+            <div className="flex gap-3 mt-3">
+
+                {/* Edit Goal button */}
+                <button
+                    type="button"
+                    onClick={onEdit}
+                    className="flex-1 border border-blue-200 text-blue-600
+                    py-2 rounded-lg font-semibold hover:bg-blue-50"
+                >
+                    Edit
+                </button>
+
+
+                {/* Delete Goal button */}
+                <button
+                    type="button"
+                    onClick={onDelete}
+                    className="flex-1 border border-red-200 text-red-600
+                    py-2 rounded-lg font-semibold hover:bg-red-50"
+                >
+                    Delete
+                </button>
+
+            </div>
 
         </div>
 

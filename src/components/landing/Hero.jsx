@@ -135,15 +135,42 @@ function Hero() {
     */
     const [goals, setGoals] = useState([]);
 
-    /*
-        Add a new financial goal to the goal list.
+    // Storethe goal currently being edited.
+    const [editingGoal, setEditingGoal] = useState(null);
 
-        GoalForm sends the new goal here.
+    /*
+        Add or update a financial goal.
+
+        If the goal already exists, we update it.
+        If it does not exist, we create a new goal.
     */
     function addGoal(goal) {
 
-        // Add the new goal to the existing goals.
+        // Check whether this goal already exists.
+        const existingGoal = goals.find(
+            (item) => item.id === goal.id
+        );
+
+
+        // If the goal already exists, update it.
+        if (existingGoal) {
+
+            setGoals(
+                goals.map((item) =>
+                    item.id === goal.id
+                        ? goal
+                        : item
+                )
+            );
+
+            return;
+        }
+
+
+        // If the goal does not exist,
+        // add it as a new goal.
         setGoals([...goals, goal]);
+
     }
 
     /*
@@ -172,6 +199,60 @@ function Hero() {
                 return goal;
             })
         );
+    }
+
+    /*
+    Delete a financial goal.
+
+    We first ask the user to confirm.
+    If they confirm, we remove the goal
+    from the goals array.
+    */
+    function deleteGoal(goalId) {
+
+        // Ask the user to confirm the deletion.
+        const confirmDelete = window.confirm(
+            "Are you sure you want to delete this financial goal?"
+        );
+
+
+        // Stop if the user clicks Cancel.
+        if (!confirmDelete) {
+            return;
+        }
+
+
+        // Remove the selected goal from the goals array.
+        setGoals(
+            goals.filter((goal) => goal.id !== goalId)
+        );
+
+    }
+
+
+    /*
+        Select the goal that the user wants to edit.
+
+        We find the goal using its ID and store it
+        in editingGoal.
+    */
+    function editGoal(goalId) {
+
+        // Find the selected goal.
+        const goalToEdit = goals.find(
+            (goal) => goal.id === goalId
+        );
+
+
+        // Stop if the goal cannot be found.
+        if (!goalToEdit) {
+            return;
+        }
+
+
+        // Store the selected goal.
+        setEditingGoal(goalToEdit);
+
     }
 
         // PART D
@@ -491,9 +572,14 @@ function Hero() {
                     */}
                     <div className="mt-8 grid-cols-1 lg:grid-cols-2 gap-8">
 
-                        {/* Create Goal Form */}
+                        {/* 
+                            GoalForm handles both creating
+                            and editing financial goals.
+                        */}
                         <GoalForm
                             onAddGoal={addGoal}
+                            editingGoal={editingGoal}
+                            onFinishEditing={() => setEditingGoal(null)}
                         />
 
 
@@ -525,6 +611,14 @@ function Hero() {
                                         currentAmount={goal.currentAmount}
                                         onAddMoney={(amount) => 
                                             addMoneyToGoal(goal.id, amount)
+                                        }
+
+                                        onEdit={() =>
+                                            editGoal(goal.id)
+                                        }
+
+                                        onDelete={() =>
+                                            deleteGoal(goal.id)
                                         }
                                     />
                                 ))

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import {  useEffect, useState } from "react";
 
 
 /*
@@ -9,8 +9,18 @@ import { useState } from "react";
     - Goal name
     - Target amount
     - Starting amount
+
+    GoalForm can now handle both creating
+    and editing financial goals.
 */
-function GoalForm({ onAddGoal }) {
+function GoalForm({
+
+    onAddGoal,
+    editingGoal,
+    onFinishEditing
+}) {
+
+
 
     // Store the name of the goal.
     const [name, setName] = useState("");
@@ -20,6 +30,24 @@ function GoalForm({ onAddGoal }) {
 
     // Store the amount already saved.
     const [currentAmount, setCurrentAmount] = useState("");
+
+    /*
+        When the user clicks Edit, load the selected
+        goal's current information into the form.
+    */
+    useEffect(() => {
+
+        // If no goal is selected for editing, do nothing.
+        if (!editingGoal) {
+            return;
+        }
+
+        // Fill the inputs with the existing goal information.
+        setName(editingGoal.name);
+        setTargetAmount(String(editingGoal.targetAmount));
+        setCurrentAmount(String(editingGoal.currentAmount));
+
+    }, [editingGoal]);
 
 
     /*
@@ -82,14 +110,19 @@ function GoalForm({ onAddGoal }) {
 
 
         /*
-            Create the goal object.
+            Create the goal information.
 
-            Date.now() gives each goal
-            a unique ID.
+            When editing:
+            Keep the existing ID.
+
+            When creating:
+            Generate a new ID.
         */
         const newGoal = {
 
-            id: Date.now(),
+            id: editingGoal
+                ? editingGoal.id
+                : Date.now(),
 
             name: name.trim(),
 
@@ -102,6 +135,11 @@ function GoalForm({ onAddGoal }) {
 
         // Send the goal to Hero.jsx.
         onAddGoal(newGoal);
+
+        // If we were editing a goal, leave edit mode after saving.
+        if (editingGoal) {
+            onFinishEditing();
+        }
 
 
         // Clear the form after saving.
@@ -122,7 +160,9 @@ function GoalForm({ onAddGoal }) {
             <div className="mb-6">
 
                 <h2 className="text-xl font-bold text-slate-800">
-                    Create Financial Goal
+                    {editingGoal
+                        ? "Edit Financial Goal"
+                        : "Create Financial Goal"}
                 </h2>
 
                 <p className="text-sm text-slate-500 mt-1">
@@ -201,7 +241,9 @@ function GoalForm({ onAddGoal }) {
                     className="w-full bg-emerald-600 text-white py-3 rounded-lg
                     font-semibold hover:bg-emerald-700"
                 >
-                    Create Goal
+                    {editingGoal
+                        ? "Update Goal"
+                        : "Create Goal"}
                 </button>
 
             </form>
