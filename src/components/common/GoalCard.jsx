@@ -271,26 +271,51 @@ function GoalCard({
             </div>
 
 
-            {/* Progress bar */}
-            <div className="w-full h-3 bg-slate-100 rounded-full overflow-hidden">
+            {/* 
+                Progress bar: 
+                Use a stronger green when the goal is completed.
+            */}
+            <div
+                className={`h-full rounded-full transition-all duration-500 ${
+                    progress >= 100
+                        ? "bg-emerald-600"
+                        : "bg-amber-500"
+                }`}
+                style={{ width: `${progress}%` }}
+            >
 
-                <div
-                    className="h-full bg-emerald-500 rounded-full transition-all duration-500"
-                    style={{ width: `${progress}%` }}
-                />
-
-            </div>
+                </div>
 
 
-            {/* Remaining amount */}
-            <p className="text-sm text-slate-500 mt-3 mb-4">
+            {/*
+                Show different messages depending on
+                whether the goal has been completed.
+            */}
+            {remainingAmount > 0 ? (
 
-                {remainingAmount > 0
-                    ? `₦${remainingAmount.toLocaleString()} remaining`
-                    : "Goal completed 🎉"
-                }
+                <p className="text-sm text-slate-500 mt-3 mb-4">
+                    ₦{remainingAmount.toLocaleString()} remaining
+                </p>
 
-            </p>
+            ) : (
+
+                /*
+                    Completion message:
+                    This appears when the target amount has been reached.
+                */
+                <div className="mt-3 mb-4 bg-emerald-50 border border-emerald-100 rounded-xl p-4">
+
+                    <p className="text-emerald-700 font-semibold">
+                        🎉 Goal completed!
+                    </p>
+
+                    <p className="text-sm text-emerald-600 mt-1">
+                        You've successfully reached your financial target.
+                    </p>
+
+                </div>
+
+            )}
 
 
             {/* 

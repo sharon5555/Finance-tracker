@@ -79,7 +79,38 @@ function Hero() {
 
     // PART B
 
-    /* 
+    /*
+        Store financial goal.
+
+        When FinFlow opens:
+        - Check whether saved goals exist in localStorage.
+        - If they exist, load them.
+        - If they don't exist, start with an empty array.
+    */
+    const [goals, setGoals] = useState(() => {
+
+        // Get the saved FinFlow data from the browser.
+        const savedData = localStorage.getItem("finflow_data");
+
+        // If saved data exists, convert it back into javascript.
+        if (savedData) {
+
+            const parsedData = JSON.parse(savedData);
+
+            //Make sure goals is always an array.
+            return Array.isArray(parsedData.goals)
+                ? parsedData.goals
+                : [];
+
+        }
+
+        // If there is no saved data, start with no goals.
+        return [];
+
+    });
+
+
+    /*
         Save all FinFlow data whenever transactions change.
 
         We store an object so we can add more data later:
@@ -87,6 +118,9 @@ function Hero() {
         - user settings
         - financial goals
         - preferences
+
+        This keeps the user's data available
+        even after refreshing the browser.
     */
     useEffect(() => {
 
@@ -95,19 +129,22 @@ function Hero() {
             // save all user transactions.
             transactions: transactions,
 
+            //Save all financial goals.
+            goals: goals,
+
             // placeholder for future settings.
             settings:{}
 
         };
 
-        // convert the object into text
+        // convert the object into text, 
         // because localStorage stores only text.
         localStorage.setItem(
             "finflow_data",
             JSON.stringify(finflowData)
         );
 
-    }, [transactions]);
+    }, [transactions, goals]);
 
 
         // PART C
@@ -121,22 +158,10 @@ function Hero() {
     // null means that no transaction is being edited.
     const [editingTransaction, setEditingTransaction] = useState(null);
 
-    /*
-        Temporary financial goal.
-
-        We are using one sample goal first
-        to make sure GoalCard works correctly.
-
-        Later we will replace this with:
-        - multiple goals
-        - a goal form
-        - adding money to goals
-        - localStorage
-    */
-    const [goals, setGoals] = useState([]);
-
     // Storethe goal currently being edited.
+    // null means that no goal is being edited.
     const [editingGoal, setEditingGoal] = useState(null);
+
 
     /*
         Add or update a financial goal.
@@ -432,7 +457,7 @@ function Hero() {
     It only needs expenses.
     */
     const expenseTransactions = transactions.filter(
-        (transaction) => transaction.type === "Expenses"
+        (transaction) => transaction.type === "Expense"
     );
 
 
@@ -493,6 +518,26 @@ function Hero() {
             color: "text-purple-600",
         },
     ];
+
+
+    /*
+        Sort goals by priority.
+
+        High goals appear first,
+        followed by Medium,
+        then Low.
+    */
+    const priorityOrder = {
+        High: 1,
+        Medium: 2,
+        Low: 3,
+    };
+
+    const sortedGoals = [...goals].sort(
+        (a, b) =>
+            (priorityOrder[a.priority] || 2) -
+            (priorityOrder[b.priority] || 2)
+    );
 
 
         // PART G
@@ -570,7 +615,7 @@ function Hero() {
                         Displays a visual comparison
                         between total income and total expenses.
                     */}
-                    < div className="mt-10 grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    <div className="mt-10 grid grid-cols-1 lg:grid-cols-2 gap-8">
 
                         {/*
                             Income vs Expenses🧮 shows how much money came in
@@ -648,9 +693,10 @@ function Hero() {
                                     style={{
                                         width: `${overallGoalProgress}%`
                                     }}
-                                    >
+                                >
 
                                 </div>
+                            </div>
 
 
                                 {/* Goal statistics */}
@@ -684,7 +730,7 @@ function Hero() {
                                             Completed
                                         </p>
 
-                                        <p className="text-2xl font-bold text-purple-600mt-1">
+                                        <p className="text-2xl font-bold text-purple-600 mt-1">
                                             {completedGoals}
                                         </p>
                                     </div>
@@ -701,7 +747,6 @@ function Hero() {
                                     </div>
                                 </div>
 
-                            </div>
                         </div>
 
                     </div>
@@ -714,7 +759,7 @@ function Hero() {
                         Displays the user's progress
                         toward the current financial goal.
                     */}
-                    <div className="mt-8 grid-cols-1 lg:grid-cols-2 gap-8">
+                    <div className="mt-8 grid grid-cols-1 lg:grid-cols-2 gap-8">
 
                         {/* 
                             GoalForm handles both creating
@@ -730,7 +775,7 @@ function Hero() {
                         {/* Existing Goals */}
                         <div className="space-y-4">
 
-                            <h2 className="text-x1 font-bold text-slate-800">
+                            <h2 className="text-xl font-bold text-slate-800">
                                 Your Financial Goals
                             </h2>
 
@@ -743,9 +788,9 @@ function Hero() {
                                 to this component through addMoneyToGoal.
                             */}
 
-                            {goals.length > 0 ? (
+                            {sortedGoals.length > 0 ? (
 
-                                goals.map((goal) => (
+                                sortedGoals.map((goal) => (
                             
 
                                     <GoalCard
@@ -870,7 +915,7 @@ function Hero() {
                                     className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
                                         transactionFilter === "All"
                                             ? "bg-emerald-600 text-white shadow-sm"
-                                            : "bg-white text-slate-600 border border-slate-200 hover:big-slate-50"
+                                            : "bg-white text-slate-600 border border-slate-200 hover:bg-slate-50"
                                     }`}
                                 >
                                     All
