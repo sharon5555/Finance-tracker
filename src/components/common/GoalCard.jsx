@@ -11,6 +11,8 @@ function GoalCard({
     name,
     targetAmount,
     currentAmount,
+    targetDate,
+    priority,
     onAddMoney,
     onDelete,
     onEdit
@@ -18,6 +20,8 @@ function GoalCard({
 
     // Store the amount the user wants to add.
     const [amountToAdd, setAmountToAdd] = useState("");
+
+
 
 
     /*
@@ -28,6 +32,103 @@ function GoalCard({
         (currentAmount / targetAmount) * 100,
         100
     );
+
+
+    /*
+        Determine the current status of the goal.
+
+        100% or more  → Completed
+        75% - 99%     → Almost There
+        Below 75%     → On Track
+    */
+    let goalStatus;
+
+    if(progress >= 100) {
+        goalStatus = "Completed";
+    } else if (progress >= 75) {
+        goalStatus ="Almost There";
+    } else {
+        goalStatus = "On Track";
+    }
+
+    /*
+        Choose the color of the priority badge based on the 
+        selected priority.
+    */
+    let priorityStyle;
+
+    if(priority === "High") {
+        priorityStyle = "bg-red-100 text-red-700";
+    } else if (priority === "Low") {
+        priorityStyle = "bg-emerald-100 text-emerald-700";
+    } else {
+        priorityStyle = "bg-amber-100 text-amber-700";
+    }
+
+    /*
+        calculate how many days are left before the 
+        financial goal deadline.
+    */
+    let daysRemaining = null;
+
+    if (targetDate) {
+
+        // convert the target date into a JavaScript Date.
+        const deadline = new Date(targetDate);
+
+        //Get today'sdate.
+        const today = new Date();
+
+        //Remove the time portion so we compare dates only.
+        today.setHours(0, 0, 0, 0);
+        deadline.setHours(0, 0, 0, 0);
+
+        //calculate the difference in milliseconds.
+        const difference = deadline - today;
+
+        // convert milliseconds into days.
+        daysRemaining = Math.ceil(
+            difference / (1000 * 60 * 60 * 24)
+        );
+    }
+
+    /*
+        create a friendly message based on the number of days
+        remaining.
+    */
+    let deadlineMessage = "";
+
+    if(progress >= 100) {
+
+        // the goal has already been completed.
+        deadlineMessage = "Goal completed";
+
+    } else if (daysRemaining === null) {
+
+        //No deadline was provided.
+        deadlineMessage = "No deadline set";
+
+    } else if (daysRemaining < 0) {
+
+        // The deadline has passed.
+        deadlineMessage = "Overdue";
+
+    } else if (daysRemaining === 0) {
+
+        // The deadline is today.
+        deadlineMessage = "Due today";
+
+    } else if(daysRemaining === 1) {
+
+        //Exactly one day remains.
+        deadlineMessage = "1 day remaining";
+
+    } else {
+
+        // More than one day remains.
+        deadlineMessage = `${daysRemaining} days remaining`;
+    }
+
 
 
     /*
@@ -89,17 +190,71 @@ function GoalCard({
         <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-6">
 
             {/* Goal heading */}
-            <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center justify-between gap-4">
 
-                <h3 className="text-lg font-bold text-slate-800">
+
+                {/* Goal name */}
+                <h3 className="text-xl font-bold text-slate-800">
                     {name}
                 </h3>
 
-                <span className="text-sm font-semibold text-emerald-600">
-                    {Math.round(progress)}%
+                {/* Status and priority badges */}
+                <div className="flex items-center gap-2">
+
+                    {/* Goal status */}
+                    <span className={`text-xs font-semibold px-3 py-1 rounded-full ${
+                        goalStatus === "Completed"
+                            ? "bg-emerald-100 text-emerald-700"
+                            : goalStatus === "Almost There"
+                            ? "bg-amber-100 text-amber-700"
+                            : "bg-blue-100 text-blue-700"
+                    }`}
+                >
+                    {goalStatus}
                 </span>
 
+                {/* Goal priority */}
+                <span
+                    className={`text-xs font-semibold px-3 py-1 rounded-full ${priorityStyle}`}
+                >
+                    {priority || "Medium"}
+                </span>
+                </div>
+
             </div>
+
+
+            {/*
+                Display the goal deadline.
+            */}
+            {targetDate && (
+                <div className="mt-2">
+
+                    {/* Display the target date */}
+                    <p className="text-sm text-slate-500">
+                        Target date:{" "}
+                        <span className="font-medium text-slate-700">
+                            {new Date(targetDate).toLocaleDateString()}
+                        </span>
+                    </p>
+
+                    {/* Display the remaining time */}
+                    <p
+                        className={`text-sm font-semibold mt-1 ${
+                            progress >= 100
+                                ? "text-emerald-600"
+                                : daysRemaining < 0
+                                ? "text-red-600"
+                                : daysRemaining <= 7
+                                ? "text-amber-600"
+                                : "text-slate-500"
+                        }`}
+                    >
+                        {deadlineMessage}
+                    </p>
+
+                </div>
+            )}
 
 
             {/* Amount information */}

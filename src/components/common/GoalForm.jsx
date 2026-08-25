@@ -32,6 +32,21 @@ function GoalForm({
     const [currentAmount, setCurrentAmount] = useState("");
 
     /*
+        Store the deadline for the financial goal.
+    */
+    const [targetDate, setTargetDate] = useState("");
+
+    /*
+        store the priority level of the financial goal.
+
+        High   → Most important
+        Medium → Normal priority
+        Low    → Less urgent 
+    */
+    const [priority, setPriority] = useState("Medium");
+
+
+    /*
         When the user clicks Edit, load the selected
         goal's current information into the form.
     */
@@ -46,6 +61,12 @@ function GoalForm({
         setName(editingGoal.name);
         setTargetAmount(String(editingGoal.targetAmount));
         setCurrentAmount(String(editingGoal.currentAmount));
+
+        // Load the existing goal deadline when editing.
+        setTargetDate(editingGoal.targetDate || "");
+
+        // Load the existing goal priority when editing.
+        setPriority(editingGoal.priority || "Medium");
 
     }, [editingGoal]);
 
@@ -112,23 +133,29 @@ function GoalForm({
         /*
             Create the goal information.
 
-            When editing:
-            Keep the existing ID.
-
-            When creating:
-            Generate a new ID.
+            targetDate stores the deadline chosen by the user.
         */
         const newGoal = {
 
+            // keep the existing ID when editing.
             id: editingGoal
                 ? editingGoal.id
                 : Date.now(),
 
+                // Goal name.
             name: name.trim(),
 
+            // Amount the user wants to reach.
             targetAmount: Number(targetAmount),
 
-            currentAmount: startingAmount
+            // Amount already saved.
+            currentAmount: startingAmount,
+
+            // Deadline for completing the goal.
+            targetDate: targetDate,
+
+            // Goal priority.
+            priority: priority
 
         };
 
@@ -148,6 +175,12 @@ function GoalForm({
         setTargetAmount("");
 
         setCurrentAmount("");
+
+        // Clear the target date after saving.
+        setTargetDate("");
+
+        //Reset the priority back to Medium.
+        setPriority("Medium");
 
     }
 
@@ -195,7 +228,10 @@ function GoalForm({
                 </div>
 
 
-                {/* Target amount */}
+                {/* 
+                    Target amount. 
+                    
+                */}
                 <div className="mb-4">
 
                     <label className="block mb-2 font-medium text-slate-700">
@@ -231,6 +267,63 @@ function GoalForm({
                         }
                         className="w-full border rounded-lg px-4 py-2"
                     />
+
+                </div>
+
+                {/*
+                    Target Date: 
+                    The user chooses when they want to 
+                    complete this financial goal.
+                */}
+                <div className="mb-4">
+
+                    <label className="block mb-2 font-medium text-slate-700">
+                        Target Date
+                    </label>
+
+                    <input 
+                        type="date"
+                        value={targetDate}
+                        onChange={(event) =>
+                            setTargetDate(event.target.value)
+                        }
+                        className="w-full border rounded-lg px-4 py-2"
+                        required
+                    />
+                </div>
+
+                {/*
+                    Goal Priority: 
+                    Allows the user to decide how important this
+                    financial goal is.
+                */}
+                <div className="mb-4">
+
+                    <label className="block mb-2 font-medium text-slate-700">
+                        Priority
+                    </label>
+
+                    <select
+                        value={priority}
+                        onChange={(event) =>
+                            setPriority(event.target.value)
+                        }
+                        className="w-full border rounded-lg px-4 py-2"
+                    >
+
+                        <option value="High">
+                            High
+                        </option>
+
+                        <option value="Medium">
+                            Medium
+                        </option>
+
+                        <option value="Low">
+                            Low
+                        </option>
+
+                    </select>
 
                 </div>
 
