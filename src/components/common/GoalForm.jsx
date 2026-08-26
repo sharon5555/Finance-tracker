@@ -288,7 +288,6 @@ function GoalForm({
                             setTargetDate(event.target.value)
                         }
                         className="w-full border rounded-lg px-4 py-2"
-                        required
                     />
                 </div>
 

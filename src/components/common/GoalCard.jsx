@@ -93,40 +93,54 @@ function GoalCard({
     }
 
     /*
-        create a friendly message based on the number of days
-        remaining.
+    Create a friendly deadline message
+    based on the number of days remaining.
     */
     let deadlineMessage = "";
+    let deadlineStyle = "text-slate-500";
 
-    if(progress >= 100) {
+    if (progress >= 100) {
 
-        // the goal has already been completed.
-        deadlineMessage = "Goal completed";
+        // The goal has already been completed.
+        deadlineMessage = "Goal completed 🎉";
+        deadlineStyle = "text-emerald-600";
 
     } else if (daysRemaining === null) {
 
-        //No deadline was provided.
-        deadlineMessage = "No deadline set";
+        // No deadline was provided.
+        // The text above already tells the user this.
+        deadlineMessage = "Set a deadline to track your progress";
+        deadlineStyle = "text-slate-400";
 
     } else if (daysRemaining < 0) {
 
-        // The deadline has passed.
+        // The deadline has already passed.
         deadlineMessage = "Overdue";
+        deadlineStyle = "text-red-600";
 
     } else if (daysRemaining === 0) {
 
         // The deadline is today.
         deadlineMessage = "Due today";
+        deadlineStyle = "text-red-600";
 
-    } else if(daysRemaining === 1) {
+    } else if (daysRemaining <= 3) {
 
-        //Exactly one day remains.
-        deadlineMessage = "1 day remaining";
+        // Only a few days remain.
+        deadlineMessage = `${daysRemaining} days remaining`;
+        deadlineStyle = "text-red-600";
+
+    } else if (daysRemaining <= 7) {
+
+        // The deadline is approaching.
+        deadlineMessage = `${daysRemaining} days remaining`;
+        deadlineStyle = "text-amber-600";
 
     } else {
 
-        // More than one day remains.
+        // There is still plenty of time.
         deadlineMessage = `${daysRemaining} days remaining`;
+        deadlineStyle = "text-slate-500";
     }
 
 
@@ -225,12 +239,21 @@ function GoalCard({
 
 
             {/*
-                Display the goal deadline.
-            */}
-            {targetDate && (
-                <div className="mt-2">
+                Always display the deadline area.
 
-                    {/* Display the target date */}
+                If the goal has a target date, we show the date.
+
+                If there is no target date,
+                we show "No deadline set". 
+            */}
+            <div className="mt-2">
+
+                {targetDate ? (
+
+                    /* 
+                        A target date exists,
+                        so display the formatted date.
+                    */
                     <p className="text-sm text-slate-500">
                         Target date:{" "}
                         <span className="font-medium text-slate-700">
@@ -238,23 +261,29 @@ function GoalCard({
                         </span>
                     </p>
 
-                    {/* Display the remaining time */}
-                    <p
-                        className={`text-sm font-semibold mt-1 ${
-                            progress >= 100
-                                ? "text-emerald-600"
-                                : daysRemaining < 0
-                                ? "text-red-600"
-                                : daysRemaining <= 7
-                                ? "text-amber-600"
-                                : "text-slate-500"
-                        }`}
+                ) : (
+
+                    /*
+                        No target date was provided.
+                     */
+                    <p className="text-sm text-slate-500">
+                        Target date:{" "}
+                        <span className="font-medium text-slate-400">
+                            No deadline set
+                        </span>
+                    </p>
+
+                )}
+
+                {/* Deadline status */}
+                <p
+                    className={`text-sm font-semibold mt-1 ${deadlineStyle}`}
                     >
                         {deadlineMessage}
                     </p>
 
-                </div>
-            )}
+            </div>
+            
 
 
             {/* Amount information */}
@@ -273,9 +302,13 @@ function GoalCard({
 
             {/* 
                 Progress bar: 
-                Use a stronger green when the goal is completed.
+                
+                The width changes automatically according to the
+                percentage of the goal completed.
             */}
-            <div
+            <div className="w-full h-3 bg-slate-100 rounded-full overflow-hidden">
+
+                <div
                 className={`h-full rounded-full transition-all duration-500 ${
                     progress >= 100
                         ? "bg-emerald-600"
@@ -283,8 +316,29 @@ function GoalCard({
                 }`}
                 style={{ width: `${progress}%` }}
             >
+            </div>
 
-                </div>
+            {/*
+                Display the exact percentage eompleted.
+            */}
+            <div className="flex justify-between items-center mt-2">
+
+                <span className="text-xs text-slate-500">
+                    Goal progress
+                </span>
+
+                <span
+                    className={`text-sm font-bold ${
+                        progress >= 100
+                            ? "text-emerald-600"
+                            : "text-slate-700"
+                    }`}
+                    >
+                        {Math.round(progress)}%
+                    </span>
+            </div>
+            </div>
+            
 
 
             {/*
