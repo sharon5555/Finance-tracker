@@ -162,6 +162,13 @@ function Hero() {
     // null means that no goal is being edited.
     const [editingGoal, setEditingGoal] = useState(null);
 
+    /*
+        Store the currently selected goal filter.
+
+        "All" means that every financial goal should be displayed.
+    */
+    const [goalFilter, setGoalFilter] = useState("All");
+
 
     /*
         Add or update a financial goal.
@@ -539,6 +546,35 @@ function Hero() {
             (priorityOrder[b.priority] || 2)
     );
 
+    /*
+        Filter the goals based on the user's selection.
+
+        Available filters: 
+        - All
+        -High
+        -Medium
+        -Low
+        -Completed
+    */
+    const filteredGoals = sortedGoals.filter((goal) => {
+
+        //Show every goal.
+        if (goalFilter === "All") {
+            return true;
+
+        }
+
+        //Show only completed goals.
+        if (goalFilter === "Completed") {
+            return Number(goal.currentAmount) >= Number(goal.targetAmount);
+
+        }
+
+        // Show goals matching the selected priority.
+        return goal.priority === goalFilter;
+
+    });
+
 
         // PART G
 
@@ -779,6 +815,31 @@ function Hero() {
                                 Your Financial Goals
                             </h2>
 
+                            {/*
+                                Goal filters.
+
+                                The user can quickly switch between
+                                different types of goals.
+                            */}
+                            <div className="flex flex-wrap gap-2 mt-4">
+
+                                {["All", "High", "Medium", "Low", "Completed"].map((filter) => (
+
+                                    <button
+                                        key={filter}
+                                        type="button"
+                                        onClick={() => setGoalFilter(filter)}
+                                        className={`px-3 py-2 rounded-lg text-sm font-medium transition ${
+                                            goalFilter === filter
+                                                ? "bg-emerald-600 text-white"
+                                                : "bg-white text-slate-600 border border-slate-200 hover:bg-slate-50"
+                                        }`}
+                                    >
+                                        {filter}
+                                    </button>
+                                ))}
+                            </div>
+
 
 
                             {/* 
@@ -788,9 +849,9 @@ function Hero() {
                                 to this component through addMoneyToGoal.
                             */}
 
-                            {sortedGoals.length > 0 ? (
+                            {filteredGoals.length > 0 ? (
 
-                                sortedGoals.map((goal) => (
+                                filteredGoals.map((goal) => (
                             
 
                                     <GoalCard
@@ -826,11 +887,15 @@ function Hero() {
                                     border-slate-300 p-8 text-center">
 
                                         <h3 className="font-semibold text-slate-700">
-                                            No financial goals yet
+                                            {goalFilter === "All"
+                                                ? "No financial goals yet"
+                                                : `No ${goalFilter.toLowerCase()} goals found`}
                                         </h3>
 
                                         <p className="text-sm text-slate-500 mt-2">
-                                            Create your first goal to start tracking your progress.
+                                            {goalFilter === "All"
+                                                ? "No financial goals yet"
+                                                : `No ${goalFilter.toLowerCase()} goals found`}
                                         </p>
                                     </div>
 
