@@ -444,6 +444,15 @@ function Hero() {
         0
     );
 
+    /*
+        Calculate the total amount still needed 
+        across all financial goals.
+    */
+    const totalGoalRemaining = Math.max(
+        totalGoalTarget - totalGoalSaved,
+        0
+    );
+
 
     // Calculate overall goal progress.
     const overallGoalProgress = totalGoalTarget > 0
@@ -736,7 +745,7 @@ function Hero() {
 
 
                                 {/* Goal statistics */}
-                                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
 
                                     {/* Total goals */}
                                     <div className="bg-slate-50 rounded-xl p-4">
@@ -761,7 +770,7 @@ function Hero() {
                                     </div>
 
                                     {/* Completed goals */}
-                                    <div className="bg-slate-500 rounded-xl p-4">
+                                    <div className="bg-slate-50 rounded-xl p-4">
                                         <p className="text-sm text-slate-500">
                                             Completed
                                         </p>
@@ -779,6 +788,23 @@ function Hero() {
 
                                         <p className="text-xl font-bold text-blue-600 mt-1">
                                             ₦{totalGoalTarget.toLocaleString()}
+                                        </p>
+                                    </div>
+
+                                    {/*
+                                        Remaining amount:
+
+                                        Shows how much money is still needed 
+                                        to complete all financial goals.
+                                    */}
+                                    <div className="bg-slate-50 rounded-xl p-4">
+
+                                        <p className="text-sm text-slate-500">
+                                            Remaining
+                                        </p>
+
+                                        <p className="text-xl font-bold text-red-600 mt-1">
+                                            ₦{totalGoalRemaining.toLocaleString()}
                                         </p>
                                     </div>
                                 </div>
