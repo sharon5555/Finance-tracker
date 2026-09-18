@@ -27,6 +27,7 @@ import DashboardSummary from "../common/DashboardSummary";
 // Import the component that displays financial goal progress.
 import GoalCard from "../common/GoalCard";
 import GoalForm from "../common/GoalForm";
+import TransactionHistory from "../common/TransactionHistory";
 
 // Import chart component.
 import FinanceChart from "../charts/FinanceChart";
@@ -709,10 +710,10 @@ function Hero() {
                     */}
                     <div className="mt-10">
 
-                        <div className="bg-white rounded-2xl shadow-sm border-slate-100 p-6">
+                        <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6">
 
                             {/* Section heading */}
-                            <div className="flex item-center justify-between mb-6">
+                            <div className="flex items-center justify-between mb-6">
 
                                 <div>
                                     <p className="text-sm text-slate-500">
@@ -1127,6 +1128,20 @@ function Hero() {
                                 )}
 
                             </div>
+
+                            {/*
+                                Complete Transaction History
+
+                                This section is placed AFTER the entire
+                                Trasaction Area.
+                            */}
+                            <TransactionHistory
+                                transactions={sortedTransactions}
+                                onEdit={editTransaction}
+                                onDelete={deleteTransaction}
+                            />
+
+
 
                         </div>
 
