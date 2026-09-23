@@ -1,7 +1,16 @@
-// TransactionHistory display the users complete transaction history.
-// Unlike the dashboard's Recent Transactions section,
-// this component will eventually show every transaction.
+// Import useState so we can store and update the search
+// and transaction filter values.
+import { useState } from "react";
 
+
+// TransactionHistory displays the user's complete transaction history.
+//
+// It allows the user to:
+// - Search transactions
+// - Filter by All, Income, or Expense
+// - See how many transactions are displayed
+// - Edit transactions
+// - Delete transactions
 
 function TransactionHistory({
     transactions,
@@ -9,56 +18,237 @@ function TransactionHistory({
     onDelete
 }) {
 
+    // Store the text entered into the transaction search box.
+    const [searchTerm, setSearchTerm] = useState("");
+
+    // Store the selected transaction type filter.
+    const [historyFilter, setHistoryFilter] = useState("All");
+
+
+    /*
+        Filter transactions using two conditions:
+
+        1. The selected transaction type.
+        2. The search text.
+
+        Both conditions must be satisfied before
+        a transaction is displayed.
+    */
+    const filteredTransactions = transactions.filter((transaction) => {
+
+        // Check whether the transaction matches the selected filter.
+        const matchesFilter =
+            historyFilter === "All" ||
+            transaction.type === historyFilter;
+
+
+        // Convert the search text to lowercase.
+        const search = searchTerm.toLowerCase();
+
+
+        // Convert the transaction information to lowercase
+        // so the search is not affected by capital letters.
+        const title = transaction.title.toLowerCase();
+        const category = transaction.category.toLowerCase();
+
+
+        // Check whether the search text exists in the
+        // transaction title or category.
+        const matchesSearch =
+            title.includes(search) ||
+            category.includes(search);
+
+
+        // A transaction must match BOTH conditions.
+        return matchesFilter && matchesSearch;
+    });
+
+
     return (
         <section className="mt-10">
 
             {/* Section heading */}
             <div className="mb-6">
+
                 <p className="text-sm text-emerald-600 font-semibold">
-                    Transaction Management 
+                    Transaction Management
                 </p>
 
                 <h2 className="text-2xl font-bold text-slate-800">
-                    Transaction History 
+                    Transaction History
                 </h2>
 
                 <p className="text-sm text-slate-500 mt-1">
                     View and manage all your financial transactions.
                 </p>
-                
+
             </div>
 
-            {/* Transaction list */}
-            <div className="bg-white rounded-2xl shadow-sm border-slate-100 overflow-hidden">
 
-                {transactions.length > 0 ? (
+            {/*
+                Transaction history card.
+
+                The search box, filters, count, and
+                transaction list all belong to this card.
+            */}
+            <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+
+
+                {/* Search and filter controls */}
+                <div className="p-5 border-b border-slate-100">
+
+                    {/* Search transactions */}
+                    <div className="mb-5">
+
+                        <label
+                            htmlFor="transaction-search"
+                            className="block text-sm font-medium text-slate-700 mb-2"
+                        >
+                            Search transactions
+                        </label>
+
+                        <input
+                            id="transaction-search"
+                            type="text"
+                            value={searchTerm}
+                            onChange={(event) =>
+                                setSearchTerm(event.target.value)
+                            }
+                            placeholder="Search by title or category..."
+                            className="w-full px-4 py-3 rounded-xl border border-slate-200
+                            focus:outline-none focus:ring-2 focus:ring-emerald-500
+                            focus:border-transparent"
+                        />
+
+                    </div>
+
+
+                    {/* Transaction type filters */}
+                    <div>
+
+                        <p className="text-sm font-medium text-slate-700 mb-2">
+                            Filter transactions
+                        </p>
+
+                        <div className="flex flex-wrap gap-2">
+
+                            {/* All transactions */}
+                            <button
+                                type="button"
+                                onClick={() => setHistoryFilter("All")}
+                                className={`px-4 py-2 rounded-lg text-sm font-medium transition ${
+                                    historyFilter === "All"
+                                        ? "bg-slate-800 text-white"
+                                        : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                                }`}
+                            >
+                                All
+                            </button>
+
+
+                            {/* Income transactions */}
+                            <button
+                                type="button"
+                                onClick={() => setHistoryFilter("Income")}
+                                className={`px-4 py-2 rounded-lg text-sm font-medium transition ${
+                                    historyFilter === "Income"
+                                        ? "bg-emerald-600 text-white"
+                                        : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                                }`}
+                            >
+                                Income
+                            </button>
+
+
+                            {/* Expense transactions */}
+                            <button
+                                type="button"
+                                onClick={() => setHistoryFilter("Expense")}
+                                className={`px-4 py-2 rounded-lg text-sm font-medium transition ${
+                                    historyFilter === "Expense"
+                                        ? "bg-red-600 text-white"
+                                        : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                                }`}
+                            >
+                                Expense
+                            </button>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                {/*
+                    Transaction count:
+
+                    filteredTransactions.length tells us how many
+                    transactions are currently visible.
+
+                    The count automatically changes when the user
+                    searches or changes the filter.
+                */}
+                <div className="px-5 py-3 bg-slate-50 border-b border-slate-100">
+
+                    <p className="text-sm text-slate-500">
+
+                        Showing{" "}
+
+                        <span className="font-semibold text-slate-700">
+                            {filteredTransactions.length}
+                        </span>
+
+                        {" "}
+
+                        {filteredTransactions.length === 1
+                            ? "transaction"
+                            : "transactions"}
+
+                    </p>
+
+                </div>
+
+
+                {/*
+                    Transaction list.
+
+                    We use filteredTransactions instead of
+                    the original transactions array.
+                */}
+                {filteredTransactions.length > 0 ? (
 
                     <div className="divide-y divide-slate-100">
 
-                        {transactions.map((transaction) => (
+                        {filteredTransactions.map((transaction) => (
 
-                            <div 
+                            <div
                                 key={transaction.id}
-                                className="p-5 flex items-center justify-between"
+                                className="p-5 flex flex-col sm:flex-row sm:items-center
+                                sm:justify-between gap-4"
                             >
 
                                 {/* Transaction information */}
                                 <div>
+
                                     <h3 className="font-semibold text-slate-800">
                                         {transaction.title}
                                     </h3>
 
                                     <p className="text-sm text-slate-500 mt-1">
-                                        {transaction.catergory} {" "}
+                                        {transaction.category}
+                                        {" • "}
                                         {transaction.date}
                                     </p>
+
                                 </div>
+
 
                                 {/* Amount and actions */}
                                 <div className="flex items-center gap-4">
 
                                     <p
-                                        className={` font-bold ${
+                                        className={`font-bold ${
                                             transaction.type === "Income"
                                                 ? "text-emerald-600"
                                                 : "text-red-600"
@@ -70,15 +260,17 @@ function TransactionHistory({
                                         ₦{Number(transaction.amount).toLocaleString()}
                                     </p>
 
+
                                     {/* Edit button */}
-                                    <button 
+                                    <button
                                         type="button"
                                         onClick={() =>
                                             onEdit(transaction.id)
                                         }
-                                        className="text-sm text-blue-600 hover:text-blue-700 font-medium"
-                                        >
-                                            Edit
+                                        className="text-sm text-blue-600
+                                        hover:text-blue-700 font-medium"
+                                    >
+                                        Edit
                                     </button>
 
 
@@ -88,7 +280,8 @@ function TransactionHistory({
                                         onClick={() =>
                                             onDelete(transaction.id)
                                         }
-                                        className="text-sm text-red-600 hover:text-red-700 font-medium"
+                                        className="text-sm text-red-600
+                                        hover:text-red-700 font-medium"
                                     >
                                         Delete
                                     </button>
@@ -96,23 +289,34 @@ function TransactionHistory({
                                 </div>
 
                             </div>
+
                         ))}
 
                     </div>
+
                 ) : (
 
-                     /* Empty state */
+                    /* Empty state */
                     <div className="p-10 text-center">
 
                         <h3 className="font-semibold text-slate-700">
-                            No transaction yet
+
+                            {transactions.length === 0
+                                ? "No transactions yet"
+                                : "No matching transactions"}
+
                         </h3>
 
                         <p className="text-sm text-slate-500 mt-2">
-                            Your transaction history will appear here.
+
+                            {transactions.length === 0
+                                ? "Your transaction history will appear here."
+                                : "Try changing your search or filter."}
+
                         </p>
 
                     </div>
+
                 )}
 
             </div>
