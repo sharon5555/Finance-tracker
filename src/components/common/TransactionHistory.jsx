@@ -229,19 +229,53 @@ function TransactionHistory({
                             >
 
                                 {/* Transaction information */}
-                                <div>
+                                {/* Transaction information */}
 
-                                    <h3 className="font-semibold text-slate-800">
-                                        {transaction.title}
-                                    </h3>
 
-                                    <p className="text-sm text-slate-500 mt-1">
-                                        {transaction.category}
-                                        {" • "}
-                                        {transaction.date}
-                                    </p>
+                            <div className="flex items-center gap-3">
 
-                                </div>
+                            {/*
+                                Small coloured circle showing the transaction type.
+
+                                Green = Income
+                                Red = Expense
+                            */}
+                            <div
+                                className={`w-10 h-10 rounded-full flex items-center
+                                justify-center flex-shrink-0 ${
+                                    transaction.type === "Income"
+                                        ? "bg-emerald-100"
+                                        : "bg-red-100"
+                                }`}
+                            >
+
+                                <span
+                                    className={`w-3 h-3 rounded-full ${
+                                        transaction.type === "Income"
+                                            ? "bg-emerald-500"
+                                            : "bg-red-500"
+                                    }`}
+                                ></span>
+
+                            </div>
+
+
+                            {/* Transaction title, category and date */}
+                            <div>
+
+                                <h3 className="font-semibold text-slate-800">
+                                    {transaction.title}
+                                </h3>
+
+                                <p className="text-sm text-slate-500 mt-1">
+                                    {transaction.category}
+                                    {" • "}
+                                    {transaction.date}
+                                </p>
+
+                            </div>
+
+                        </div>
 
 
                                 {/* Amount and actions */}
