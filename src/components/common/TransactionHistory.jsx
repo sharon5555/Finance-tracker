@@ -24,6 +24,11 @@ function TransactionHistory({
     // Store the selected transaction type filter.
     const [historyFilter, setHistoryFilter] = useState("All");
 
+    // Reset both the search box and transaction filter.
+    function clearFilters() {
+        setSearchTerm("");
+        setHistoryFilter("All");
+    }
 
     /*
         Filter transactions using two conditions:
@@ -172,6 +177,19 @@ function TransactionHistory({
                             >
                                 Expense
                             </button>
+
+                            {/* Clear search and filter */}
+                            {(searchTerm || historyFilter !== "All") && (
+                                <button
+                                    type="button"
+                                    onClick={clearFilters}
+                                    className="px-4 py-2 rounded-lg text-sm font-medium
+                                    text-slate-600 bg-white border border-slate-200
+                                    hover:bg-slate-50 transition"
+                                >
+                                    Clear Filters
+                                </button>
+                            )}
 
                         </div>
 
