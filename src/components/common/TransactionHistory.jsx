@@ -11,6 +11,7 @@ import { useState } from "react";
 // - See how many transactions are displayed
 // - Edit transactions
 // - Delete transactions
+// - Clearly identify Income and Expense transactions
 
 function TransactionHistory({
     transactions,
@@ -24,11 +25,13 @@ function TransactionHistory({
     // Store the selected transaction type filter.
     const [historyFilter, setHistoryFilter] = useState("All");
 
+
     // Reset both the search box and transaction filter.
     function clearFilters() {
         setSearchTerm("");
         setHistoryFilter("All");
     }
+
 
     /*
         Filter transactions using two conditions:
@@ -178,6 +181,7 @@ function TransactionHistory({
                                 Expense
                             </button>
 
+
                             {/* Clear search and filter */}
                             {(searchTerm || historyFilter !== "All") && (
                                 <button
@@ -246,59 +250,89 @@ function TransactionHistory({
                                 sm:justify-between gap-4"
                             >
 
-                                {/* Transaction information */}
-                                {/* Transaction information */}
+                                {/*
+                                    Transaction information.
+
+                                    The coloured circle gives the user
+                                    a quick visual indication of whether
+                                    money came in or went out.
+                                */}
+                                <div className="flex items-center gap-3">
+
+                                    {/*
+                                        Small coloured circle showing
+                                        the transaction type.
+
+                                        Green = Income
+                                        Red = Expense
+                                    */}
+                                    <div
+                                        className={`w-10 h-10 rounded-full flex items-center
+                                        justify-center flex-shrink-0 ${
+                                            transaction.type === "Income"
+                                                ? "bg-emerald-100"
+                                                : "bg-red-100"
+                                        }`}
+                                    >
+
+                                        <span
+                                            className={`w-3 h-3 rounded-full ${
+                                                transaction.type === "Income"
+                                                    ? "bg-emerald-500"
+                                                    : "bg-red-500"
+                                            }`}
+                                        ></span>
+
+                                    </div>
 
 
-                            <div className="flex items-center gap-3">
+                                    {/* Transaction title, category and date */}
+                                    <div>
 
-                            {/*
-                                Small coloured circle showing the transaction type.
+                                        <h3 className="font-semibold text-slate-800">
+                                            {transaction.title}
+                                        </h3>
 
-                                Green = Income
-                                Red = Expense
-                            */}
-                            <div
-                                className={`w-10 h-10 rounded-full flex items-center
-                                justify-center flex-shrink-0 ${
-                                    transaction.type === "Income"
-                                        ? "bg-emerald-100"
-                                        : "bg-red-100"
-                                }`}
-                            >
+                                        <p className="text-sm text-slate-500 mt-1">
+                                            {transaction.category}
+                                            {" • "}
+                                            {transaction.date}
+                                        </p>
 
-                                <span
-                                    className={`w-3 h-3 rounded-full ${
-                                        transaction.type === "Income"
-                                            ? "bg-emerald-500"
-                                            : "bg-red-500"
-                                    }`}
-                                ></span>
+                                    </div>
 
-                            </div>
+                                </div>
 
 
-                            {/* Transaction title, category and date */}
-                            <div>
+                                {/*
+                                    Amount, transaction type, and actions.
 
-                                <h3 className="font-semibold text-slate-800">
-                                    {transaction.title}
-                                </h3>
+                                    The flex-wrap class helps the controls
+                                    fit better on smaller screens.
+                                */}
+                                <div className="flex items-center gap-4 flex-wrap">
 
-                                <p className="text-sm text-slate-500 mt-1">
-                                    {transaction.category}
-                                    {" • "}
-                                    {transaction.date}
-                                </p>
+                                    {/*
+                                        Transaction type badge.
 
-                            </div>
+                                        Green = Income
+                                        Red = Expense
 
-                        </div>
+                                        This makes the transaction type
+                                        immediately visible.
+                                    */}
+                                    <span
+                                        className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                                            transaction.type === "Income"
+                                                ? "bg-emerald-100 text-emerald-700"
+                                                : "bg-red-100 text-red-700"
+                                        }`}
+                                    >
+                                        {transaction.type}
+                                    </span>
 
 
-                                {/* Amount and actions */}
-                                <div className="flex items-center gap-4">
-
+                                    {/* Transaction amount */}
                                     <p
                                         className={`font-bold ${
                                             transaction.type === "Income"
@@ -348,7 +382,12 @@ function TransactionHistory({
 
                 ) : (
 
-                    /* Empty state */
+                    /*
+                        Empty state:
+
+                        This appears when there are no transactions
+                        or when the search/filter finds no match.
+                    */
                     <div className="p-10 text-center">
 
                         <h3 className="font-semibold text-slate-700">
