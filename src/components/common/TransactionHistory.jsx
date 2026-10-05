@@ -1,5 +1,5 @@
-// Import useState so we can store and update the search
-// and transaction filter values.
+// Import useState so we can store and update the search,
+// filter, and sorting values.
 import { useState } from "react";
 
 
@@ -8,6 +8,7 @@ import { useState } from "react";
 // It allows the user to:
 // - Search transactions
 // - Filter by All, Income, or Expense
+// - Sort transactions
 // - See how many transactions are displayed
 // - Edit transactions
 // - Delete transactions
@@ -25,22 +26,24 @@ function TransactionHistory({
     // Store the selected transaction type filter.
     const [historyFilter, setHistoryFilter] = useState("All");
 
+    // Store the selected sorting option.
+    const [sortOption, setSortOption] = useState("newest");
 
-    // Reset both the search box and transaction filter.
+
+    // Reset the search, filter, and sorting options.
     function clearFilters() {
         setSearchTerm("");
         setHistoryFilter("All");
+        setSortOption("newest");
     }
 
 
     /*
-        Filter transactions using two conditions:
+        First filter the transactions.
 
-        1. The selected transaction type.
-        2. The search text.
-
-        Both conditions must be satisfied before
-        a transaction is displayed.
+        A transaction must:
+        - Match the selected Income/Expense filter.
+        - Match the search text.
     */
     const filteredTransactions = transactions.filter((transaction) => {
 
@@ -67,9 +70,49 @@ function TransactionHistory({
             category.includes(search);
 
 
-        // A transaction must match BOTH conditions.
+        // Both conditions must be true.
         return matchesFilter && matchesSearch;
     });
+
+
+    /*
+        Sort the filtered transactions.
+
+        We create a copy using [...filteredTransactions]
+        so we don't accidentally change the original
+        transactions array.
+    */
+    const sortedTransactions = [...filteredTransactions].sort(
+        (a, b) => {
+
+            // Newest transaction first.
+            if (sortOption === "newest") {
+                return new Date(b.date) - new Date(a.date);
+            }
+
+
+            // Oldest transaction first.
+            if (sortOption === "oldest") {
+                return new Date(a.date) - new Date(b.date);
+            }
+
+
+            // Highest transaction amount first.
+            if (sortOption === "highest") {
+                return Number(b.amount) - Number(a.amount);
+            }
+
+
+            // Lowest transaction amount first.
+            if (sortOption === "lowest") {
+                return Number(a.amount) - Number(b.amount);
+            }
+
+
+            // Keep the original order if no option matches.
+            return 0;
+        }
+    );
 
 
     return (
@@ -96,13 +139,14 @@ function TransactionHistory({
             {/*
                 Transaction history card.
 
-                The search box, filters, count, and
-                transaction list all belong to this card.
+                The search box, filters, sorting controls,
+                count, and transaction list all belong
+                to this card.
             */}
             <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
 
 
-                {/* Search and filter controls */}
+                {/* Search, filter, and sorting controls */}
                 <div className="p-5 border-b border-slate-100">
 
                     {/* Search transactions */}
@@ -132,7 +176,7 @@ function TransactionHistory({
 
 
                     {/* Transaction type filters */}
-                    <div>
+                    <div className="mb-5">
 
                         <p className="text-sm font-medium text-slate-700 mb-2">
                             Filter transactions
@@ -182,8 +226,8 @@ function TransactionHistory({
                             </button>
 
 
-                            {/* Clear search and filter */}
-                            {(searchTerm || historyFilter !== "All") && (
+                            {/* Clear filters */}
+                            {(searchTerm || historyFilter !== "All" || sortOption !== "newest") && (
                                 <button
                                     type="button"
                                     onClick={clearFilters}
@@ -199,17 +243,58 @@ function TransactionHistory({
 
                     </div>
 
+
+                    {/* Sorting control */}
+                    <div>
+
+                        <label
+                            htmlFor="transaction-sort"
+                            className="block text-sm font-medium text-slate-700 mb-2"
+                        >
+                            Sort transactions
+                        </label>
+
+                        <select
+                            id="transaction-sort"
+                            value={sortOption}
+                            onChange={(event) =>
+                                setSortOption(event.target.value)
+                            }
+                            className="w-full sm:w-auto min-w-52 px-4 py-3
+                            rounded-xl border border-slate-200 bg-white
+                            text-slate-700
+                            focus:outline-none focus:ring-2
+                            focus:ring-emerald-500
+                            focus:border-transparent"
+                        >
+                            <option value="newest">
+                                Newest first
+                            </option>
+
+                            <option value="oldest">
+                                Oldest first
+                            </option>
+
+                            <option value="highest">
+                                Highest amount
+                            </option>
+
+                            <option value="lowest">
+                                Lowest amount
+                            </option>
+                        </select>
+
+                    </div>
+
                 </div>
 
 
                 {/*
-                    Transaction count:
+                    Transaction count.
 
-                    filteredTransactions.length tells us how many
-                    transactions are currently visible.
-
-                    The count automatically changes when the user
-                    searches or changes the filter.
+                    sortedTransactions contains the same number
+                    of transactions as filteredTransactions, but
+                    now in the selected order.
                 */}
                 <div className="px-5 py-3 bg-slate-50 border-b border-slate-100">
 
@@ -218,12 +303,12 @@ function TransactionHistory({
                         Showing{" "}
 
                         <span className="font-semibold text-slate-700">
-                            {filteredTransactions.length}
+                            {sortedTransactions.length}
                         </span>
 
                         {" "}
 
-                        {filteredTransactions.length === 1
+                        {sortedTransactions.length === 1
                             ? "transaction"
                             : "transactions"}
 
@@ -235,28 +320,22 @@ function TransactionHistory({
                 {/*
                     Transaction list.
 
-                    We use filteredTransactions instead of
-                    the original transactions array.
+                    We display sortedTransactions so the user's
+                    selected sorting option controls the order.
                 */}
-                {filteredTransactions.length > 0 ? (
+                {sortedTransactions.length > 0 ? (
 
                     <div className="divide-y divide-slate-100">
 
-                        {filteredTransactions.map((transaction) => (
+                        {sortedTransactions.map((transaction) => (
 
                             <div
                                 key={transaction.id}
-                                className="p-5 flex flex-col sm:flex-row sm:items-center
-                                sm:justify-between gap-4"
+                                className="p-5 flex flex-col sm:flex-row
+                                sm:items-center sm:justify-between gap-4"
                             >
 
-                                {/*
-                                    Transaction information.
-
-                                    The coloured circle gives the user
-                                    a quick visual indication of whether
-                                    money came in or went out.
-                                */}
+                                {/* Transaction information */}
                                 <div className="flex items-center gap-3">
 
                                     {/*
@@ -267,8 +346,9 @@ function TransactionHistory({
                                         Red = Expense
                                     */}
                                     <div
-                                        className={`w-10 h-10 rounded-full flex items-center
-                                        justify-center flex-shrink-0 ${
+                                        className={`w-10 h-10 rounded-full
+                                        flex items-center justify-center
+                                        flex-shrink-0 ${
                                             transaction.type === "Income"
                                                 ? "bg-emerald-100"
                                                 : "bg-red-100"
@@ -307,22 +387,16 @@ function TransactionHistory({
                                 {/*
                                     Amount, transaction type, and actions.
 
-                                    The flex-wrap class helps the controls
-                                    fit better on smaller screens.
+                                    flex-wrap allows these controls
+                                    to move onto another line on
+                                    smaller screens.
                                 */}
                                 <div className="flex items-center gap-4 flex-wrap">
 
-                                    {/*
-                                        Transaction type badge.
-
-                                        Green = Income
-                                        Red = Expense
-
-                                        This makes the transaction type
-                                        immediately visible.
-                                    */}
+                                    {/* Transaction type badge */}
                                     <span
-                                        className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                                        className={`px-3 py-1 rounded-full
+                                        text-xs font-semibold ${
                                             transaction.type === "Income"
                                                 ? "bg-emerald-100 text-emerald-700"
                                                 : "bg-red-100 text-red-700"
@@ -382,12 +456,7 @@ function TransactionHistory({
 
                 ) : (
 
-                    /*
-                        Empty state:
-
-                        This appears when there are no transactions
-                        or when the search/filter finds no match.
-                    */
+                    /* Empty state */
                     <div className="p-10 text-center">
 
                         <h3 className="font-semibold text-slate-700">
