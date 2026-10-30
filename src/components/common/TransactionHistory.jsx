@@ -8,6 +8,7 @@ import { useState } from "react";
 // It allows the user to:
 // - Search transactions
 // - Filter by All, Income, or Expense
+// - Filter by Date Range
 // - Sort transactions
 // - See how many transactions are displayed
 // - Edit transactions
@@ -29,12 +30,18 @@ function TransactionHistory({
     // Store the selected sorting option.
     const [sortOption, setSortOption] = useState("newest");
 
+    // Store the beginning and ending dates for filtering transactions.
+    const [startDate, setStartDate] = useState("");
+    const [endDate, setEndDate] = useState("");
 
-    // Reset the search, filter, and sorting options.
+
+    // Reset the search, filter, date range, and sorting options.
     function clearFilters() {
         setSearchTerm("");
         setHistoryFilter("All");
         setSortOption("newest");
+        setStartDate("");
+        setEndDate("");
     }
 
 
@@ -44,6 +51,7 @@ function TransactionHistory({
         A transaction must:
         - Match the selected Income/Expense filter.
         - Match the search text.
+        - Fall within the selected date range.
     */
     const filteredTransactions = transactions.filter((transaction) => {
 
@@ -70,8 +78,16 @@ function TransactionHistory({
             category.includes(search);
 
 
-        // Both conditions must be true.
-        return matchesFilter && matchesSearch;
+        // Check whether a transaction falls within the selected date range.
+        const matchesStartDate =
+            !startDate || transaction.date >= startDate;
+
+        const matchesEndDate =
+            !endDate || transaction.date <= endDate;
+
+
+        // All conditions must be true.
+        return matchesFilter && matchesSearch && matchesStartDate && matchesEndDate;
     });
 
 
@@ -114,45 +130,46 @@ function TransactionHistory({
         }
     );
 
-        // Export the currently displayed transactions as a CSV file.
-function exportTransactions() {
-    // Stop if there are no transactions to export.
-    if (sortedTransactions.length === 0) {
-        return;
-    }
 
-    // These are the column headings in the downloaded file.
-    const headers = [
-        "Date",
-        "Title",
-        "Category",
-        "Type",
-        "Amount"
-    ];
+    // Export the currently displayed transactions as a CSV file.
+    function exportTransactions() {
+        // Stop if there are no transactions to export.
+        if (sortedTransactions.length === 0) {
+            return;
+        }
 
-    // Convert each transaction into a CSV row.
-    const rows = sortedTransactions.map((transaction) => [
-        transaction.date,
-        transaction.title,
-        transaction.category,
-        transaction.type,
-        transaction.amount
-    ]);
+        // These are the column headings in the downloaded file.
+        const headers = [
+            "Date",
+            "Title",
+            "Category",
+            "Type",
+            "Amount"
+        ];
 
-    // Combine the headings and transaction rows.
-    const csvContent = [headers, ...rows]
-        .map((row) =>
-            row.map((value) =>
-                `"${String(value ?? "").replace(/"/g, '""')}"`
-            ).join(",")
-        )
-        .join("\n");
+        // Convert each transaction into a CSV row.
+        const rows = sortedTransactions.map((transaction) => [
+            transaction.date,
+            transaction.title,
+            transaction.category,
+            transaction.type,
+            transaction.amount
+        ]);
 
-    // Create a downloadable CSV file.
-    const file = new Blob(
-        ["\uFEFF" + csvContent],
-        { type: "text/csv;charset=utf-8;" }
-    );
+        // Combine the headings and transaction rows.
+        const csvContent = [headers, ...rows]
+            .map((row) =>
+                row.map((value) =>
+                    `"${String(value ?? "").replace(/"/g, '""')}"`
+                ).join(",")
+            )
+            .join("\n");
+
+        // Create a downloadable CSV file.
+        const file = new Blob(
+            ["\uFEFF" + csvContent],
+            { type: "text/csv;charset=utf-8;" }
+        );
 
         // Create a temporary download link.
         const url = URL.createObjectURL(file);
@@ -195,8 +212,8 @@ function exportTransactions() {
             {/*
                 Transaction history card.
 
-                The search box, filters, sorting controls,
-                count, and transaction list all belong
+                The search box, date filters, transaction filters, 
+                sorting controls, count, and transaction list all belong
                 to this card.
             */}
             <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
@@ -227,6 +244,55 @@ function exportTransactions() {
                             focus:outline-none focus:ring-2 focus:ring-emerald-500
                             focus:border-transparent"
                         />
+
+                    </div>
+
+
+                    {/* Date range filters */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-5">
+
+                        {/* Starting date */}
+                        <div>
+                            <label
+                                htmlFor="start-date"
+                                className="block text-sm font-medium text-slate-700 mb-2"
+                            >
+                                From date
+                            </label>
+
+                            <input
+                                type="date"
+                                id="start-date"
+                                value={startDate}
+                                onChange={(event) => setStartDate(event.target.value)}
+                                className="w-full px-4 py-3 rounded-xl border
+                                border-slate-200 bg-white text-slate-700
+                                focus:outline-none focus:ring-2
+                                focus:ring-emerald-500"
+                            />
+                        </div>
+
+                        {/* Ending date */}
+                        <div>
+                            <label
+                                htmlFor="end-date"
+                                className="block text-sm font-medium text-slate-700 mb-2"
+                            >
+                                To date
+                            </label>
+
+                            <input
+                                type="date"
+                                id="end-date"
+                                value={endDate}
+                                min={startDate || undefined}
+                                onChange={(event) => setEndDate(event.target.value)}
+                                className="w-full px-4 py-3 rounded-xl border
+                                border-slate-200 bg-white text-slate-700
+                                focus:outline-none focus:ring-2
+                                focus:ring-emerald-500"
+                            />
+                        </div>
 
                     </div>
 
@@ -283,7 +349,7 @@ function exportTransactions() {
 
 
                             {/* Clear filters */}
-                            {(searchTerm || historyFilter !== "All" || sortOption !== "newest") && (
+                            {(searchTerm || historyFilter !== "All" || sortOption !== "newest" || startDate || endDate) && (
                                 <button
                                     type="button"
                                     onClick={clearFilters}
@@ -539,7 +605,7 @@ function exportTransactions() {
 
                             {transactions.length === 0
                                 ? "Your transaction history will appear here."
-                                : "Try changing your search or filter."}
+                                : "Try changing your search, date range, or filter."}
 
                         </p>
 
