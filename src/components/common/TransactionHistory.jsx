@@ -114,6 +114,62 @@ function TransactionHistory({
         }
     );
 
+        // Export the currently displayed transactions as a CSV file.
+function exportTransactions() {
+    // Stop if there are no transactions to export.
+    if (sortedTransactions.length === 0) {
+        return;
+    }
+
+    // These are the column headings in the downloaded file.
+    const headers = [
+        "Date",
+        "Title",
+        "Category",
+        "Type",
+        "Amount"
+    ];
+
+    // Convert each transaction into a CSV row.
+    const rows = sortedTransactions.map((transaction) => [
+        transaction.date,
+        transaction.title,
+        transaction.category,
+        transaction.type,
+        transaction.amount
+    ]);
+
+    // Combine the headings and transaction rows.
+    const csvContent = [headers, ...rows]
+        .map((row) =>
+            row.map((value) =>
+                `"${String(value ?? "").replace(/"/g, '""')}"`
+            ).join(",")
+        )
+        .join("\n");
+
+    // Create a downloadable CSV file.
+    const file = new Blob(
+        ["\uFEFF" + csvContent],
+        { type: "text/csv;charset=utf-8;" }
+    );
+
+        // Create a temporary download link.
+        const url = URL.createObjectURL(file);
+        const link = document.createElement("a");
+
+        link.href = url;
+        link.download = "FinFlow-Transactions.csv";
+
+        // Start the download.
+        document.body.appendChild(link);
+        link.click();
+
+        // Clean up the temporary link and URL.
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+    }
+
 
     return (
         <section className="mt-10">
@@ -238,6 +294,18 @@ function TransactionHistory({
                                     Clear Filters
                                 </button>
                             )}
+
+                            <button
+                                type="button"
+                                onClick={exportTransactions}
+                                disabled={sortedTransactions.length === 0}
+                                className="px-4 py-3 rounded-xl bg-emerald-600
+                                text-white text-sm font-semibold
+                                hover:bg-emerald-700 transition
+                                disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                                Export CSV
+                            </button>
 
                         </div>
 
