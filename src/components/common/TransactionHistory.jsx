@@ -10,7 +10,7 @@ import { useState } from "react";
 // - Filter by All, Income, or Expense
 // - Filter by Date Range
 // - Sort transactions
-// - Paginate through transaction results with numbered buttons
+// - Paginate through transaction results with compact numbered buttons and ellipses
 // - See how many transactions are displayed
 // - Edit transactions
 // - Delete transactions
@@ -147,6 +147,55 @@ function TransactionHistory({
 
     // Keep the current page within the available page range.
     const safeCurrentPage = Math.min(currentPage, totalPages);
+
+
+    /*
+        Create compact pagination numbers.
+
+        Show:
+        - The first page.
+        - Nearby pages.
+        - The last page.
+        - Ellipses when some pages are hidden.
+    */
+    const pageNumbers = (() => {
+        // Show all pages when there are 5 or fewer.
+        if (totalPages <= 5) {
+            return Array.from(
+                { length: totalPages },
+                (_, index) => index + 1
+            );
+        }
+
+        const pages = [];
+
+        // Always show the first page.
+        pages.push(1);
+
+        // Add an ellipsis when earlier pages are hidden.
+        if (safeCurrentPage > 3) {
+            pages.push("...");
+        }
+
+        // Show the page before, current page, and page after.
+        const startPage = Math.max(2, safeCurrentPage - 1);
+        const endPage = Math.min(totalPages - 1, safeCurrentPage + 1);
+
+        for (let page = startPage; page <= endPage; page++) {
+            pages.push(page);
+        }
+
+        // Add an ellipsis when later pages are hidden.
+        if (safeCurrentPage < totalPages - 2) {
+            pages.push("...");
+        }
+
+        // Always show the last page.
+        pages.push(totalPages);
+
+        return pages;
+    })();
+
 
     // Calculate where the current page's transactions begin.
     const startIndex = (safeCurrentPage - 1) * itemsPerPage;
@@ -686,29 +735,37 @@ function TransactionHistory({
                                 Previous
                             </button>
 
-                            {/* Numbered page buttons */}
-                            {Array.from(
-                                { length: totalPages },
-                                (_, index) => index + 1
-                            ).map((pageNumber) => (
-                                <button
-                                    key={pageNumber}
-                                    type="button"
-                                    onClick={() => setCurrentPage(pageNumber)}
-                                    aria-current={
-                                        safeCurrentPage === pageNumber
-                                            ? "page"
-                                            : undefined
-                                    }
-                                    className={`w-10 h-10 rounded-lg text-sm
-                                    font-semibold transition ${
-                                        safeCurrentPage === pageNumber
-                                            ? "bg-emerald-600 text-white"
-                                            : "border border-slate-200 text-slate-700 hover:bg-slate-50"
-                                    }`}
-                                >
-                                    {pageNumber}
-                                </button>
+                            {/* Compact numbered page buttons */}
+                            {pageNumbers.map((pageNumber, index) => (
+                                pageNumber === "..." ? (
+                                    // Display ellipsis instead of a clickable button.
+                                    <span
+                                        key={`ellipsis-${index}`}
+                                        className="px-2 text-slate-400"
+                                    >
+                                        ...
+                                    </span>
+                                ) : (
+                                    // Display clickable page numbers.
+                                    <button
+                                        key={pageNumber}
+                                        type="button"
+                                        onClick={() => setCurrentPage(pageNumber)}
+                                        aria-current={
+                                            safeCurrentPage === pageNumber
+                                                ? "page"
+                                                : undefined
+                                        }
+                                        className={`w-10 h-10 rounded-lg text-sm
+                                        font-semibold transition ${
+                                            safeCurrentPage === pageNumber
+                                                ? "bg-emerald-600 text-white"
+                                                : "border border-slate-200 text-slate-700 hover:bg-slate-50"
+                                        }`}
+                                    >
+                                        {pageNumber}
+                                    </button>
+                                )
                             ))}
 
                             {/* Next button */}
