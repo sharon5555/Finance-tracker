@@ -10,6 +10,7 @@ import { useState } from "react";
 // - Filter by All, Income, or Expense
 // - Filter by Date Range
 // - Sort transactions
+// - Paginate through transaction results
 // - See how many transactions are displayed
 // - Edit transactions
 // - Delete transactions
@@ -34,14 +35,21 @@ function TransactionHistory({
     const [startDate, setStartDate] = useState("");
     const [endDate, setEndDate] = useState("");
 
+    // Keep track of the current transaction history page.
+    const [currentPage, setCurrentPage] = useState(1);
 
-    // Reset the search, filter, date range, and sorting options.
+    // Display 10 transactions on each page.
+    const itemsPerPage = 10;
+
+
+    // Reset the search, filter, date range, sorting, and pagination options.
     function clearFilters() {
         setSearchTerm("");
         setHistoryFilter("All");
         setSortOption("newest");
         setStartDate("");
         setEndDate("");
+        setCurrentPage(1);
     }
 
 
@@ -128,6 +136,25 @@ function TransactionHistory({
             // Keep the original order if no option matches.
             return 0;
         }
+    );
+
+
+    // Calculate how many pages are needed.
+    const totalPages = Math.max(
+        Math.ceil(sortedTransactions.length / itemsPerPage),
+        1
+    );
+
+    // Keep the current page within the available page range.
+    const safeCurrentPage = Math.min(currentPage, totalPages);
+
+    // Calculate where the current page's transactions begin.
+    const startIndex = (safeCurrentPage - 1) * itemsPerPage;
+
+    // Get only the transactions for the current page.
+    const paginatedTransactions = sortedTransactions.slice(
+        startIndex,
+        startIndex + itemsPerPage
     );
 
 
@@ -236,9 +263,10 @@ function TransactionHistory({
                             id="transaction-search"
                             type="text"
                             value={searchTerm}
-                            onChange={(event) =>
-                                setSearchTerm(event.target.value)
-                            }
+                            onChange={(event) => {
+                                setSearchTerm(event.target.value);
+                                setCurrentPage(1);
+                            }}
                             placeholder="Search by title or category..."
                             className="w-full px-4 py-3 rounded-xl border border-slate-200
                             focus:outline-none focus:ring-2 focus:ring-emerald-500
@@ -264,7 +292,10 @@ function TransactionHistory({
                                 type="date"
                                 id="start-date"
                                 value={startDate}
-                                onChange={(event) => setStartDate(event.target.value)}
+                                onChange={(event) => {
+                                    setStartDate(event.target.value);
+                                    setCurrentPage(1);
+                                }}
                                 className="w-full px-4 py-3 rounded-xl border
                                 border-slate-200 bg-white text-slate-700
                                 focus:outline-none focus:ring-2
@@ -286,7 +317,10 @@ function TransactionHistory({
                                 id="end-date"
                                 value={endDate}
                                 min={startDate || undefined}
-                                onChange={(event) => setEndDate(event.target.value)}
+                                onChange={(event) => {
+                                    setEndDate(event.target.value);
+                                    setCurrentPage(1);
+                                }}
                                 className="w-full px-4 py-3 rounded-xl border
                                 border-slate-200 bg-white text-slate-700
                                 focus:outline-none focus:ring-2
@@ -309,7 +343,10 @@ function TransactionHistory({
                             {/* All transactions */}
                             <button
                                 type="button"
-                                onClick={() => setHistoryFilter("All")}
+                                onClick={() => {
+                                    setHistoryFilter("All");
+                                    setCurrentPage(1);
+                                }}
                                 className={`px-4 py-2 rounded-lg text-sm font-medium transition ${
                                     historyFilter === "All"
                                         ? "bg-slate-800 text-white"
@@ -323,7 +360,10 @@ function TransactionHistory({
                             {/* Income transactions */}
                             <button
                                 type="button"
-                                onClick={() => setHistoryFilter("Income")}
+                                onClick={() => {
+                                    setHistoryFilter("Income");
+                                    setCurrentPage(1);
+                                }}
                                 className={`px-4 py-2 rounded-lg text-sm font-medium transition ${
                                     historyFilter === "Income"
                                         ? "bg-emerald-600 text-white"
@@ -337,7 +377,10 @@ function TransactionHistory({
                             {/* Expense transactions */}
                             <button
                                 type="button"
-                                onClick={() => setHistoryFilter("Expense")}
+                                onClick={() => {
+                                    setHistoryFilter("Expense");
+                                    setCurrentPage(1);
+                                }}
                                 className={`px-4 py-2 rounded-lg text-sm font-medium transition ${
                                     historyFilter === "Expense"
                                         ? "bg-red-600 text-white"
@@ -391,9 +434,10 @@ function TransactionHistory({
                         <select
                             id="transaction-sort"
                             value={sortOption}
-                            onChange={(event) =>
-                                setSortOption(event.target.value)
-                            }
+                            onChange={(event) => {
+                                setSortOption(event.target.value);
+                                setCurrentPage(1);
+                            }}
                             className="w-full sm:w-auto min-w-52 px-4 py-3
                             rounded-xl border border-slate-200 bg-white
                             text-slate-700
@@ -426,9 +470,8 @@ function TransactionHistory({
                 {/*
                     Transaction count.
 
-                    sortedTransactions contains the same number
-                    of transactions as filteredTransactions, but
-                    now in the selected order.
+                    sortedTransactions contains the total number
+                    of matching transactions.
                 */}
                 <div className="px-5 py-3 bg-slate-50 border-b border-slate-100">
 
@@ -452,16 +495,16 @@ function TransactionHistory({
 
 
                 {/*
-                    Transaction list.
+                    Transaction list (paginated).
 
-                    We display sortedTransactions so the user's
-                    selected sorting option controls the order.
+                    We display paginatedTransactions so only the current
+                    page's items are rendered.
                 */}
                 {sortedTransactions.length > 0 ? (
 
                     <div className="divide-y divide-slate-100">
 
-                        {sortedTransactions.map((transaction) => (
+                        {paginatedTransactions.map((transaction) => (
 
                             <div
                                 key={transaction.id}
@@ -520,10 +563,6 @@ function TransactionHistory({
 
                                 {/*
                                     Amount, transaction type, and actions.
-
-                                    flex-wrap allows these controls
-                                    to move onto another line on
-                                    smaller screens.
                                 */}
                                 <div className="flex items-center gap-4 flex-wrap">
 
@@ -611,6 +650,64 @@ function TransactionHistory({
 
                     </div>
 
+                )}
+
+
+                {/* Transaction history pagination */}
+                {sortedTransactions.length > itemsPerPage && (
+                    <div className="p-5 flex flex-col sm:flex-row items-center
+                    justify-between gap-4 border-t border-slate-100 bg-slate-50/50">
+
+                        {/* Current page information */}
+                        <p className="text-sm text-slate-500">
+                            Page{" "}
+                            <span className="font-semibold text-slate-700">
+                                {safeCurrentPage}
+                            </span>
+                            {" "}of{" "}
+                            <span className="font-semibold text-slate-700">
+                                {totalPages}
+                            </span>
+                        </p>
+
+                        {/* Navigation buttons */}
+                        <div className="flex items-center gap-3">
+
+                            {/* Previous page */}
+                            <button
+                                type="button"
+                                onClick={() =>
+                                    setCurrentPage(safeCurrentPage - 1)
+                                }
+                                disabled={safeCurrentPage === 1}
+                                className="px-4 py-2 rounded-lg border
+                                border-slate-200 text-sm font-medium
+                                text-slate-700 bg-white hover:bg-slate-50
+                                transition disabled:opacity-40
+                                disabled:cursor-not-allowed"
+                            >
+                                Previous
+                            </button>
+
+                            {/* Next page */}
+                            <button
+                                type="button"
+                                onClick={() =>
+                                    setCurrentPage(safeCurrentPage + 1)
+                                }
+                                disabled={safeCurrentPage === totalPages}
+                                className="px-4 py-2 rounded-lg bg-emerald-600
+                                text-white text-sm font-medium
+                                hover:bg-emerald-700 transition
+                                disabled:opacity-40
+                                disabled:cursor-not-allowed"
+                            >
+                                Next
+                            </button>
+
+                        </div>
+
+                    </div>
                 )}
 
             </div>
