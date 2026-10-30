@@ -10,7 +10,7 @@ import { useState } from "react";
 // - Filter by All, Income, or Expense
 // - Filter by Date Range
 // - Sort transactions
-// - Paginate through transaction results
+// - Paginate through transaction results with numbered buttons
 // - See how many transactions are displayed
 // - Edit transactions
 // - Delete transactions
@@ -658,7 +658,7 @@ function TransactionHistory({
                     <div className="p-5 flex flex-col sm:flex-row items-center
                     justify-between gap-4 border-t border-slate-100 bg-slate-50/50">
 
-                        {/* Current page information */}
+                        {/* Show the current page */}
                         <p className="text-sm text-slate-500">
                             Page{" "}
                             <span className="font-semibold text-slate-700">
@@ -670,36 +670,55 @@ function TransactionHistory({
                             </span>
                         </p>
 
-                        {/* Navigation buttons */}
-                        <div className="flex items-center gap-3">
+                        {/* Pagination buttons */}
+                        <div className="flex flex-wrap items-center justify-center gap-2">
 
-                            {/* Previous page */}
+                            {/* Previous button */}
                             <button
                                 type="button"
-                                onClick={() =>
-                                    setCurrentPage(safeCurrentPage - 1)
-                                }
+                                onClick={() => setCurrentPage(safeCurrentPage - 1)}
                                 disabled={safeCurrentPage === 1}
-                                className="px-4 py-2 rounded-lg border
-                                border-slate-200 text-sm font-medium
-                                text-slate-700 bg-white hover:bg-slate-50
-                                transition disabled:opacity-40
-                                disabled:cursor-not-allowed"
+                                className="px-3 py-2 rounded-lg border
+                                border-slate-200 text-sm text-slate-700
+                                hover:bg-slate-50 transition
+                                disabled:opacity-40 disabled:cursor-not-allowed"
                             >
                                 Previous
                             </button>
 
-                            {/* Next page */}
+                            {/* Numbered page buttons */}
+                            {Array.from(
+                                { length: totalPages },
+                                (_, index) => index + 1
+                            ).map((pageNumber) => (
+                                <button
+                                    key={pageNumber}
+                                    type="button"
+                                    onClick={() => setCurrentPage(pageNumber)}
+                                    aria-current={
+                                        safeCurrentPage === pageNumber
+                                            ? "page"
+                                            : undefined
+                                    }
+                                    className={`w-10 h-10 rounded-lg text-sm
+                                    font-semibold transition ${
+                                        safeCurrentPage === pageNumber
+                                            ? "bg-emerald-600 text-white"
+                                            : "border border-slate-200 text-slate-700 hover:bg-slate-50"
+                                    }`}
+                                >
+                                    {pageNumber}
+                                </button>
+                            ))}
+
+                            {/* Next button */}
                             <button
                                 type="button"
-                                onClick={() =>
-                                    setCurrentPage(safeCurrentPage + 1)
-                                }
+                                onClick={() => setCurrentPage(safeCurrentPage + 1)}
                                 disabled={safeCurrentPage === totalPages}
-                                className="px-4 py-2 rounded-lg bg-emerald-600
-                                text-white text-sm font-medium
-                                hover:bg-emerald-700 transition
-                                disabled:opacity-40
+                                className="px-3 py-2 rounded-lg bg-emerald-600
+                                text-white text-sm hover:bg-emerald-700
+                                transition disabled:opacity-40
                                 disabled:cursor-not-allowed"
                             >
                                 Next
