@@ -1,6 +1,5 @@
-// Import useState so we can store and update the search,
-// filter, and sorting values.
-import { useState } from "react";
+// Import useState and useEffect so we can store state and manage effects.
+import { useEffect, useState } from "react";
 
 
 // TransactionHistory displays the user's complete transaction history.
@@ -9,6 +8,7 @@ import { useState } from "react";
 // - Search transactions
 // - Filter by All, Income, or Expense
 // - Filter by Date Range
+// - Choose transactions per page (10, 20, 50)
 // - Sort transactions
 // - Paginate through transaction results with compact numbered buttons and ellipses
 // - See how many transactions are displayed
@@ -35,11 +35,25 @@ function TransactionHistory({
     const [startDate, setStartDate] = useState("");
     const [endDate, setEndDate] = useState("");
 
-    // Keep track of the current transaction history page.
+    // Store the current transaction history page.
     const [currentPage, setCurrentPage] = useState(1);
 
-    // Display 10 transactions on each page.
-    const itemsPerPage = 10;
+    // Allow users to choose how many transactions appear per page.
+    const [itemsPerPage, setItemsPerPage] = useState(10);
+
+
+    /*
+        Reset pagination whenever the filters or page size change.
+    */
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [
+        searchTerm,
+        historyFilter,
+        startDate,
+        endDate,
+        itemsPerPage
+    ]);
 
 
     // Reset the search, filter, date range, sorting, and pagination options.
@@ -50,6 +64,7 @@ function TransactionHistory({
         setStartDate("");
         setEndDate("");
         setCurrentPage(1);
+        setItemsPerPage(10);
     }
 
 
@@ -312,10 +327,9 @@ function TransactionHistory({
                             id="transaction-search"
                             type="text"
                             value={searchTerm}
-                            onChange={(event) => {
-                                setSearchTerm(event.target.value);
-                                setCurrentPage(1);
-                            }}
+                            onChange={(event) =>
+                                setSearchTerm(event.target.value)
+                            }
                             placeholder="Search by title or category..."
                             className="w-full px-4 py-3 rounded-xl border border-slate-200
                             focus:outline-none focus:ring-2 focus:ring-emerald-500
@@ -341,10 +355,7 @@ function TransactionHistory({
                                 type="date"
                                 id="start-date"
                                 value={startDate}
-                                onChange={(event) => {
-                                    setStartDate(event.target.value);
-                                    setCurrentPage(1);
-                                }}
+                                onChange={(event) => setStartDate(event.target.value)}
                                 className="w-full px-4 py-3 rounded-xl border
                                 border-slate-200 bg-white text-slate-700
                                 focus:outline-none focus:ring-2
@@ -366,16 +377,42 @@ function TransactionHistory({
                                 id="end-date"
                                 value={endDate}
                                 min={startDate || undefined}
-                                onChange={(event) => {
-                                    setEndDate(event.target.value);
-                                    setCurrentPage(1);
-                                }}
+                                onChange={(event) => setEndDate(event.target.value)}
                                 className="w-full px-4 py-3 rounded-xl border
                                 border-slate-200 bg-white text-slate-700
                                 focus:outline-none focus:ring-2
                                 focus:ring-emerald-500"
                             />
                         </div>
+
+                    </div>
+
+
+                    {/* Transactions per page selector */}
+                    <div className="mb-5 flex flex-col sm:flex-row items-start sm:items-center gap-3">
+
+                        <label
+                            htmlFor="items-per-page"
+                            className="text-sm font-medium text-slate-700"
+                        >
+                            Transactions per page:
+                        </label>
+
+                        <select
+                            id="items-per-page"
+                            value={itemsPerPage}
+                            onChange={(event) =>
+                                setItemsPerPage(Number(event.target.value))
+                            }
+                            className="px-4 py-2 rounded-lg border
+                            border-slate-200 bg-white text-sm text-slate-700
+                            focus:outline-none focus:ring-2
+                            focus:ring-emerald-500"
+                        >
+                            <option value={10}>10 transactions</option>
+                            <option value={20}>20 transactions</option>
+                            <option value={50}>50 transactions</option>
+                        </select>
 
                     </div>
 
@@ -392,10 +429,7 @@ function TransactionHistory({
                             {/* All transactions */}
                             <button
                                 type="button"
-                                onClick={() => {
-                                    setHistoryFilter("All");
-                                    setCurrentPage(1);
-                                }}
+                                onClick={() => setHistoryFilter("All")}
                                 className={`px-4 py-2 rounded-lg text-sm font-medium transition ${
                                     historyFilter === "All"
                                         ? "bg-slate-800 text-white"
@@ -409,10 +443,7 @@ function TransactionHistory({
                             {/* Income transactions */}
                             <button
                                 type="button"
-                                onClick={() => {
-                                    setHistoryFilter("Income");
-                                    setCurrentPage(1);
-                                }}
+                                onClick={() => setHistoryFilter("Income")}
                                 className={`px-4 py-2 rounded-lg text-sm font-medium transition ${
                                     historyFilter === "Income"
                                         ? "bg-emerald-600 text-white"
@@ -426,10 +457,7 @@ function TransactionHistory({
                             {/* Expense transactions */}
                             <button
                                 type="button"
-                                onClick={() => {
-                                    setHistoryFilter("Expense");
-                                    setCurrentPage(1);
-                                }}
+                                onClick={() => setHistoryFilter("Expense")}
                                 className={`px-4 py-2 rounded-lg text-sm font-medium transition ${
                                     historyFilter === "Expense"
                                         ? "bg-red-600 text-white"
@@ -441,7 +469,7 @@ function TransactionHistory({
 
 
                             {/* Clear filters */}
-                            {(searchTerm || historyFilter !== "All" || sortOption !== "newest" || startDate || endDate) && (
+                            {(searchTerm || historyFilter !== "All" || sortOption !== "newest" || startDate || endDate || itemsPerPage !== 10) && (
                                 <button
                                     type="button"
                                     onClick={clearFilters}
@@ -483,10 +511,9 @@ function TransactionHistory({
                         <select
                             id="transaction-sort"
                             value={sortOption}
-                            onChange={(event) => {
-                                setSortOption(event.target.value);
-                                setCurrentPage(1);
-                            }}
+                            onChange={(event) =>
+                                setSortOption(event.target.value)
+                            }
                             className="w-full sm:w-auto min-w-52 px-4 py-3
                             rounded-xl border border-slate-200 bg-white
                             text-slate-700
