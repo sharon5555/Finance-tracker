@@ -52,6 +52,16 @@ function TransactionHistory({
     // Tracks whether the transaction reference ID has been copied.
     const [copiedReference, setCopiedReference] = useState(false);
 
+    // Stores the month selected for monthly export.
+    const [selectedExportMonth, setSelectedExportMonth] = useState(() => {
+        const today = new Date();
+
+        const year = today.getFullYear();
+        const month = String(today.getMonth() + 1).padStart(2, "0");
+
+        return `${year}-${month}`;
+    });
+
 
     // =========================================
     // DOWNLOAD TRANSACTION RECEIPT AS PDF
@@ -816,6 +826,226 @@ function TransactionHistory({
     }
 
 
+    // =========================================
+    // EXPORT MONTHLY TRANSACTIONS TO EXCEL
+    // =========================================
+
+    function exportMonthlyTransactions() {
+
+        // Make sure a month has been selected.
+        if (!selectedExportMonth) {
+            window.alert("Please select a month first.");
+            return;
+        }
+
+        // Get all transactions belonging to the selected month.
+        const monthlyTransactions = transactions.filter((transaction) =>
+            String(transaction.date || "").startsWith(selectedExportMonth)
+        );
+
+        // Stop if there are no transactions for this month.
+        if (monthlyTransactions.length === 0) {
+            window.alert("There are no transactions for the selected month.");
+            return;
+        }
+
+        // Calculate monthly income.
+        const monthlyIncome = monthlyTransactions
+            .filter((transaction) => transaction.type === "Income")
+            .reduce(
+                (total, transaction) =>
+                    total + Number(transaction.amount || 0),
+                0
+            );
+
+        // Calculate monthly expenses.
+        const monthlyExpenses = monthlyTransactions
+            .filter((transaction) => transaction.type === "Expense")
+            .reduce(
+                (total, transaction) =>
+                    total + Number(transaction.amount || 0),
+                0
+            );
+
+        // Calculate the monthly net balance.
+        const monthlyNetBalance = monthlyIncome - monthlyExpenses;
+
+        // Prepare transaction records.
+        const monthlyData = monthlyTransactions.map((transaction) => ({
+            Date: transaction.date,
+            Title: transaction.title,
+            Category: transaction.category,
+            Type: transaction.type,
+            Amount: Number(transaction.amount || 0),
+            "Reference ID": `FIN-${String(transaction.id)
+                .slice(-8)
+                .toUpperCase()}`
+        }));
+
+        // Create the Transactions worksheet.
+        const transactionSheet = XLSX.utils.json_to_sheet(monthlyData);
+
+        // Set column widths.
+        transactionSheet["!cols"] = [
+            { wch: 15 },
+            { wch: 25 },
+            { wch: 20 },
+            { wch: 15 },
+            { wch: 18 },
+            { wch: 22 }
+        ];
+
+        // Style the column headings.
+        const range = XLSX.utils.decode_range(transactionSheet["!ref"]);
+
+        for (let column = range.s.c; column <= range.e.c; column++) {
+
+            const address = XLSX.utils.encode_cell({
+                r: 0,
+                c: column
+            });
+
+            transactionSheet[address].s = {
+                font: {
+                    bold: true,
+                    color: { rgb: "FFFFFF" }
+                },
+                fill: {
+                    patternType: "solid",
+                    fgColor: { rgb: "2563EB" }
+                },
+                alignment: {
+                    horizontal: "center",
+                    vertical: "center"
+                }
+            };
+        }
+
+        // Format transaction amounts as Nigerian Naira.
+        for (let row = 1; row <= range.e.r; row++) {
+
+            const amountCell = XLSX.utils.encode_cell({
+                r: row,
+                c: 4
+            });
+
+            if (transactionSheet[amountCell]) {
+                transactionSheet[amountCell].z = '"₦"#,##0.00';
+            }
+        }
+
+        // Prepare the monthly financial summary.
+        const summaryData = [
+            ["FINFLOW MONTHLY FINANCIAL REPORT"],
+            [],
+            ["Selected Month", selectedExportMonth],
+            [],
+            ["Financial Overview", "Amount"],
+            ["Total Income", monthlyIncome],
+            ["Total Expenses", monthlyExpenses],
+            ["Net Balance", monthlyNetBalance],
+            ["Transactions Recorded", monthlyTransactions.length]
+        ];
+
+        // Create the Financial Summary worksheet.
+        const summarySheet = XLSX.utils.aoa_to_sheet(summaryData);
+
+        summarySheet["!cols"] = [
+            { wch: 30 },
+            { wch: 24 }
+        ];
+
+        // Merge the report title across two columns.
+        summarySheet["!merges"] = [
+            {
+                s: { r: 0, c: 0 },
+                e: { r: 0, c: 1 }
+            }
+        ];
+
+        // Style the report title.
+        summarySheet["A1"].s = {
+            font: {
+                bold: true,
+                color: { rgb: "FFFFFF" },
+                sz: 16
+            },
+            fill: {
+                patternType: "solid",
+                fgColor: { rgb: "1E3A8A" }
+            },
+            alignment: {
+                horizontal: "center"
+            }
+        };
+
+        // Style the financial overview headings.
+        ["A5", "B5"].forEach((address) => {
+            summarySheet[address].s = {
+                font: {
+                    bold: true,
+                    color: { rgb: "FFFFFF" }
+                },
+                fill: {
+                    patternType: "solid",
+                    fgColor: { rgb: "2563EB" }
+                },
+                alignment: {
+                    horizontal: "center"
+                }
+            };
+        });
+
+        // Format the financial amounts.
+        ["B6", "B7", "B8"].forEach((address) => {
+            summarySheet[address].z = '"₦"#,##0.00';
+        });
+
+        // Highlight the monthly net balance.
+        summarySheet["B8"].s = {
+            font: {
+                bold: true,
+                color: {
+                    rgb: monthlyNetBalance >= 0
+                        ? "15803D"
+                        : "DC2626"
+                }
+            },
+            fill: {
+                patternType: "solid",
+                fgColor: {
+                    rgb: monthlyNetBalance >= 0
+                        ? "DCFCE7"
+                        : "FEE2E2"
+                }
+            },
+            numFmt: '"₦"#,##0.00'
+        };
+
+        // Create a new workbook.
+        const workbook = XLSX.utils.book_new();
+
+        // Add the two worksheets.
+        XLSX.utils.book_append_sheet(
+            workbook,
+            transactionSheet,
+            "Monthly Transactions"
+        );
+
+        XLSX.utils.book_append_sheet(
+            workbook,
+            summarySheet,
+            "Monthly Summary"
+        );
+
+        // Download the monthly report.
+        XLSX.writeFile(
+            workbook,
+            `FinFlow-Monthly-Report-${selectedExportMonth}.xlsx`
+        );
+    }
+
+
     return (
         <section className="mt-10">
 
@@ -1040,6 +1270,37 @@ function TransactionHistory({
                                 transition disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                                 Export Excel
+                            </button>
+
+                        </div>
+
+                        {/* =========================================
+                            MONTHLY TRANSACTION EXPORT
+                        ========================================= */}
+
+                        <div className="flex flex-col sm:flex-row gap-3 mt-4">
+
+                            {/* Select the month */}
+                            <input
+                                type="month"
+                                value={selectedExportMonth}
+                                onChange={(event) =>
+                                    setSelectedExportMonth(event.target.value)
+                                }
+                                className="w-full sm:w-auto rounded-xl border
+                                border-gray-200 bg-white px-4 py-3
+                                text-gray-700 outline-none focus:border-blue-500"
+                            />
+
+                            {/* Export Monthly Report */}
+                            <button
+                                type="button"
+                                onClick={exportMonthlyTransactions}
+                                className="w-full sm:w-auto rounded-xl
+                                bg-purple-600 px-5 py-3 text-white
+                                font-semibold hover:bg-purple-700 transition"
+                            >
+                                Export Monthly Report
                             </button>
 
                         </div>
