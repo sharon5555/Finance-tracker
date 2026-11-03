@@ -962,13 +962,27 @@ function TransactionHistory({
 
                         </div>
 
+                        {/* Edit transaction button */}
+                        <button
+                            type="button"
+                            onClick={() => {
+                                onEdit(selectedTransaction.id);
+                                setSelectedTransaction(null);
+                            }}
+                            className="w-full mt-7 py-3 rounded-xl
+                            bg-emerald-600 text-white font-semibold
+                            hover:bg-emerald-700 transition"
+                        >
+                            Edit Transaction
+                        </button>
+
                         {/* Close button */}
                         <button
                             type="button"
                             onClick={() => setSelectedTransaction(null)}
-                            className="w-full mt-7 py-3 rounded-xl
-                            bg-emerald-600 text-white font-semibold
-                            hover:bg-emerald-700 transition"
+                            className="w-full mt-3 py-3 rounded-xl
+                            bg-slate-100 text-slate-700 font-semibold
+                            hover:bg-slate-200 transition"
                         >
                             Close
                         </button>
