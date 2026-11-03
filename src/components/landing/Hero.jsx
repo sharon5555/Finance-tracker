@@ -32,6 +32,7 @@ import MonthlyComparison from "../common/MonthlyComparison";
 import MonthlyInsights from "../common/MonthlyInsights";
 import SpendingAlerts from "../common/SpendingAlerts";
 import BudgetPlanner from "../common/BudgetPlanner";
+import BudgetRecommendations from "../common/BudgetRecommendations";
 
 // Import chart component.
 import FinanceChart from "../charts/FinanceChart";
@@ -745,7 +746,8 @@ function Hero() {
                     </div>
 
                     {/*
-                        Monthly Financial Comparison, Insights & Spending Alerts
+                        Monthly Financial Comparison, Insights, Spending Alerts,
+                        Budget Planner, & Budget Recommendations
                     */}
                     <div className="mt-8 space-y-6">
                         <MonthlyComparison
@@ -765,6 +767,12 @@ function Hero() {
                             transactions={transactions}
                             onAddBudget={addBudget}
                             onDeleteBudget={deleteBudget}
+                        />
+
+                        <BudgetRecommendations
+                            transactions={transactions}
+                            budgets={budgets}
+                            onApplyRecommendation={addBudget}
                         />
                     </div>
 
