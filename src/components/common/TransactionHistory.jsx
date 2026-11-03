@@ -2,8 +2,8 @@
 import { useEffect, useState } from "react";
 // Import jsPDF for generating downloadable transaction receipts.
 import { jsPDF } from "jspdf";
-// Import XLSX for generating Excel workbooks.
-import * as XLSX from "xlsx";
+// Import XLSX styled package for generating professionally formatted Excel workbooks.
+import * as XLSX from "xlsx-js-style";
 
 
 // TransactionHistory displays the user's complete transaction history.
@@ -491,12 +491,12 @@ function TransactionHistory({
 
 
     // =========================================
-    // EXPORT TRANSACTIONS TO EXCEL
+    // EXPORT PROFESSIONALLY FORMATTED EXCEL REPORT
     // =========================================
 
     function exportToExcel() {
 
-        // Check whether there are transactions to export.
+        // Check whether transactions are available.
         if (sortedTransactions.length === 0) {
             window.alert("There are no transactions to export.");
             return;
@@ -520,16 +520,16 @@ function TransactionHistory({
                 0
             );
 
-        // Calculate the net balance.
+        // Calculate net balance.
         const netBalance = totalIncome - totalExpenses;
 
-        // Prepare transaction data for Excel.
+        // Prepare transaction records.
         const transactionData = sortedTransactions.map((transaction) => ({
             Date: transaction.date,
             Title: transaction.title,
             Category: transaction.category,
             Type: transaction.type,
-            Amount: Number(transaction.amount),
+            Amount: Number(transaction.amount || 0),
             "Reference ID": `FIN-${String(transaction.id)
                 .slice(-8)
                 .toUpperCase()}`
@@ -550,7 +550,107 @@ function TransactionHistory({
             { wch: 22 }
         ];
 
-        // Prepare financial summary data.
+        // Set the header row height.
+        transactionSheet["!rows"] = [
+            { hpt: 28 }
+        ];
+
+        // Style the transaction headings.
+        const transactionRange = XLSX.utils.decode_range(
+            transactionSheet["!ref"]
+        );
+
+        for (
+            let column = transactionRange.s.c;
+            column <= transactionRange.e.c;
+            column++
+        ) {
+            const cellAddress = XLSX.utils.encode_cell({
+                r: 0,
+                c: column
+            });
+
+            transactionSheet[cellAddress].s = {
+                font: {
+                    bold: true,
+                    color: { rgb: "FFFFFF" },
+                    sz: 11
+                },
+                fill: {
+                    patternType: "solid",
+                    fgColor: { rgb: "2563EB" }
+                },
+                alignment: {
+                    horizontal: "center",
+                    vertical: "center"
+                }
+            };
+        }
+
+        // Style the transaction data rows.
+        for (
+            let row = 1;
+            row <= transactionRange.e.r;
+            row++
+        ) {
+
+            const rowColor = row % 2 === 0
+                ? "EFF6FF"
+                : "FFFFFF";
+
+            for (
+                let column = 0;
+                column <= transactionRange.e.c;
+                column++
+            ) {
+
+                const cellAddress = XLSX.utils.encode_cell({
+                    r: row,
+                    c: column
+                });
+
+                const cell = transactionSheet[cellAddress];
+
+                if (!cell) continue;
+
+                cell.s = {
+                    fill: {
+                        patternType: "solid",
+                        fgColor: { rgb: rowColor }
+                    },
+                    font: {
+                        color: { rgb: "374151" },
+                        sz: 10
+                    },
+                    alignment: {
+                        vertical: "center"
+                    }
+                };
+
+                // Format the Amount column as Nigerian Naira.
+                if (column === 4) {
+                    cell.z = '"₦"#,##0.00';
+                    cell.s.alignment = {
+                        horizontal: "right",
+                        vertical: "center"
+                    };
+                }
+
+                // Highlight income and expenses.
+                if (column === 3) {
+                    cell.s.font = {
+                        bold: true,
+                        color: {
+                            rgb: cell.v === "Income"
+                                ? "15803D"
+                                : "DC2626"
+                        }
+                    };
+                }
+            }
+        }
+
+        // Prepare financial summary worksheet.
         const summaryData = [
             ["FINFLOW FINANCIAL SUMMARY"],
             [],
@@ -567,16 +667,135 @@ function TransactionHistory({
             summaryData
         );
 
-        // Set summary column widths.
+        // Set column widths.
         summarySheet["!cols"] = [
             { wch: 30 },
-            { wch: 20 }
+            { wch: 22 }
         ];
 
-        // Create a new Excel workbook.
+        // Merge the report title across two columns.
+        summarySheet["!merges"] = [
+            {
+                s: { r: 0, c: 0 },
+                e: { r: 0, c: 1 }
+            }
+        ];
+
+        // Set row heights.
+        summarySheet["!rows"] = [
+            { hpt: 32 },
+            { hpt: 10 },
+            { hpt: 26 }
+        ];
+
+        // Style the report title.
+        summarySheet["A1"].s = {
+            font: {
+                bold: true,
+                color: { rgb: "FFFFFF" },
+                sz: 16
+            },
+            fill: {
+                patternType: "solid",
+                fgColor: { rgb: "1E3A8A" }
+            },
+            alignment: {
+                horizontal: "center",
+                vertical: "center"
+            }
+        };
+
+        // Style the summary headings.
+        ["A3", "B3"].forEach((cellAddress) => {
+            summarySheet[cellAddress].s = {
+                font: {
+                    bold: true,
+                    color: { rgb: "FFFFFF" },
+                    sz: 11
+                },
+                fill: {
+                    patternType: "solid",
+                    fgColor: { rgb: "2563EB" }
+                },
+                alignment: {
+                    horizontal: "center",
+                    vertical: "center"
+                }
+            };
+        });
+
+        // Style the financial summary values.
+        ["A4", "A5", "A6", "A8"].forEach((cellAddress) => {
+            summarySheet[cellAddress].s = {
+                font: {
+                    bold: true,
+                    color: { rgb: "374151" }
+                },
+                fill: {
+                    patternType: "solid",
+                    fgColor: { rgb: "EFF6FF" }
+                },
+                alignment: {
+                    vertical: "center"
+                }
+            };
+        });
+
+        // Format the financial amounts as Naira.
+        ["B4", "B5", "B6"].forEach((cellAddress) => {
+            summarySheet[cellAddress].z = '"₦"#,##0.00';
+
+            summarySheet[cellAddress].s = {
+                font: {
+                    bold: true,
+                    color: { rgb: "1E3A8A" }
+                },
+                alignment: {
+                    horizontal: "right"
+                }
+            };
+        });
+
+        // Highlight the net balance.
+        summarySheet["B6"].s = {
+            font: {
+                bold: true,
+                color: {
+                    rgb: netBalance >= 0
+                        ? "15803D"
+                        : "DC2626"
+                },
+                sz: 12
+            },
+            fill: {
+                patternType: "solid",
+                fgColor: {
+                    rgb: netBalance >= 0
+                        ? "DCFCE7"
+                        : "FEE2E2"
+                }
+            },
+            alignment: {
+                horizontal: "right"
+            },
+            numFmt: '"₦"#,##0.00'
+        };
+
+        // Format the exported transaction count.
+        summarySheet["B8"].s = {
+            font: {
+                bold: true,
+                color: { rgb: "2563EB" }
+            },
+            alignment: {
+                horizontal: "right"
+            }
+        };
+
+        // Create the Excel workbook.
         const workbook = XLSX.utils.book_new();
 
-        // Add both worksheets to the workbook.
+        // Add both worksheets.
         XLSX.utils.book_append_sheet(
             workbook,
             transactionSheet,
@@ -589,7 +808,7 @@ function TransactionHistory({
             "Financial Summary"
         );
 
-        // Download the Excel workbook.
+        // Download the formatted Excel report.
         XLSX.writeFile(
             workbook,
             "FinFlow-Financial-Report.xlsx"
