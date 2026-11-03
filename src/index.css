@@ -1,1 +1,30 @@
 @import "tailwindcss";
+
+/* =========================================
+   FINFLOW PRINT RECEIPT
+========================================= */
+
+@media print {
+
+    /* Hide everything on the page */
+    body * {
+        visibility: hidden !important;
+    }
+
+    /* Display only the transaction receipt */
+    #transaction-receipt,
+    #transaction-receipt * {
+        visibility: visible !important;
+    }
+
+    #transaction-receipt {
+        display: block !important;
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        padding: 20px;
+        background-color: white;
+    }
+
+}

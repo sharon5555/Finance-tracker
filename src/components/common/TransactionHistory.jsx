@@ -1,5 +1,7 @@
 // Import useState and useEffect so we can store state and manage effects.
 import { useEffect, useState } from "react";
+// Import jsPDF for generating downloadable transaction receipts.
+import { jsPDF } from "jspdf";
 
 
 // TransactionHistory displays the user's complete transaction history.
@@ -12,7 +14,7 @@ import { useEffect, useState } from "react";
 // - Sort transactions
 // - Paginate through transaction results with compact numbered buttons and ellipses
 // - See how many transactions are displayed
-// - View detailed transaction info via modal (with Escape key & outside click support)
+// - View detailed transaction info via modal (with PDF receipt download, printing, copyable Reference ID)
 // - Edit transactions
 // - Delete transactions
 // - Clearly identify Income and Expense transactions
@@ -44,6 +46,138 @@ function TransactionHistory({
 
     // Store the transaction the user wants to view.
     const [selectedTransaction, setSelectedTransaction] = useState(null);
+
+    // Tracks whether the transaction reference ID has been copied.
+    const [copiedReference, setCopiedReference] = useState(false);
+
+
+    // =========================================
+    // DOWNLOAD TRANSACTION RECEIPT AS PDF
+    // =========================================
+
+    function downloadReceipt() {
+        if (!selectedTransaction) return;
+
+        // Create a new PDF document.
+        const doc = new jsPDF();
+
+        // Generate the transaction reference.
+        const referenceId = `FIN-${String(
+            selectedTransaction.id
+        ).slice(-8).toUpperCase()}`;
+
+        // Format the transaction date.
+        const formattedDate = selectedTransaction.date
+            ? new Date(
+                selectedTransaction.date + "T00:00:00"
+            ).toLocaleDateString("en-GB", {
+                day: "numeric",
+                month: "long",
+                year: "numeric"
+            })
+            : "No date available";
+
+        // Format the transaction amount.
+        const amount = Number(
+            selectedTransaction.amount
+        ).toLocaleString("en-NG");
+
+        // Receipt heading.
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(24);
+        doc.setTextColor(37, 99, 235);
+        doc.text("FinFlow", 105, 25, { align: "center" });
+
+        doc.setFontSize(12);
+        doc.setTextColor(100, 100, 100);
+        doc.text("Transaction Receipt", 105, 34, {
+            align: "center"
+        });
+
+        // Horizontal divider.
+        doc.setDrawColor(220, 220, 220);
+        doc.line(20, 43, 190, 43);
+
+        // Transaction amount.
+        doc.setFontSize(11);
+        doc.setTextColor(100, 100, 100);
+        doc.text("Transaction Amount", 20, 58);
+
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(22);
+        doc.setTextColor(
+            selectedTransaction.type === "Income" ? 22 : 220,
+            selectedTransaction.type === "Income" ? 163 : 38,
+            selectedTransaction.type === "Income" ? 74 : 38
+        );
+
+        const sign =
+            selectedTransaction.type === "Income" ? "+" : "-";
+
+        doc.text(`${sign} NGN ${amount}`, 20, 70);
+
+        // Transaction information.
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(11);
+        doc.setTextColor(80, 80, 80);
+
+        let yPosition = 92;
+
+        const addDetail = (label, value) => {
+            doc.setFont("helvetica", "normal");
+            doc.setTextColor(100, 100, 100);
+            doc.text(label, 20, yPosition);
+
+            doc.setFont("helvetica", "bold");
+            doc.setTextColor(40, 40, 40);
+
+            const lines = doc.splitTextToSize(
+                String(value || "Not provided"),
+                95
+            );
+
+            doc.text(lines, 190, yPosition, {
+                align: "right"
+            });
+
+            yPosition += Math.max(12, lines.length * 6 + 4);
+        };
+
+        addDetail("Description", selectedTransaction.title);
+        addDetail("Category", selectedTransaction.category);
+        addDetail("Transaction Type", selectedTransaction.type);
+        addDetail("Date", formattedDate);
+        addDetail("Reference ID", referenceId);
+
+        // Receipt footer.
+        doc.setDrawColor(220, 220, 220);
+        doc.line(20, yPosition + 5, 190, yPosition + 5);
+
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(11);
+        doc.setTextColor(37, 99, 235);
+
+        doc.text(
+            "Thank you for using FinFlow!",
+            105,
+            yPosition + 17,
+            { align: "center" }
+        );
+
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(9);
+        doc.setTextColor(120, 120, 120);
+
+        doc.text(
+            "Personal finance record - Not proof of payment.",
+            105,
+            yPosition + 24,
+            { align: "center" }
+        );
+
+        // Download the PDF.
+        doc.save(`FinFlow-Receipt-${referenceId}.pdf`);
+    }
 
 
     /*
@@ -720,7 +854,10 @@ function TransactionHistory({
                                     {/* View Details button */}
                                     <button
                                         type="button"
-                                        onClick={() => setSelectedTransaction(transaction)}
+                                        onClick={() => {
+                                            setCopiedReference(false);
+                                            setSelectedTransaction(transaction);
+                                        }}
                                         className="px-3 py-2 rounded-lg text-sm font-medium
                                         text-emerald-700 bg-emerald-50
                                         hover:bg-emerald-100 transition"
@@ -875,135 +1012,353 @@ function TransactionHistory({
             </div>
 
 
-            {/* Transaction Details Modal */}
+            {/* =========================================
+                TRANSACTION DETAILS MODAL
+            ========================================= */}
+
             {selectedTransaction && (
                 <div
-                    className="fixed inset-0 z-50 flex items-center
-                    justify-center bg-slate-900/60 p-4"
                     onClick={() => setSelectedTransaction(null)}
+                    className="fixed inset-0 z-50 flex items-center justify-center
+                    bg-black/60 backdrop-blur-sm p-4"
                 >
-
+                    {/* Modal Container */}
                     <div
-                        className="w-full max-w-md rounded-2xl
-                        bg-white p-6 shadow-2xl"
+                        role="dialog"
+                        aria-modal="true"
+                        aria-labelledby="transaction-modal-title"
                         onClick={(event) => event.stopPropagation()}
+                        className="relative w-full max-w-lg max-h-[90vh] overflow-y-auto
+                        rounded-2xl bg-white p-5 sm:p-7 shadow-2xl"
                     >
 
-                        {/* Modal heading */}
-                        <div className="flex items-center justify-between mb-6">
-                            <h2 className="text-xl font-bold text-slate-800">
-                                Transaction Details
-                            </h2>
+                        {/* Modal Header */}
+                        <div className="flex items-start justify-between gap-4 mb-6">
 
+                            <div>
+                                <p className="text-sm text-gray-500 mb-1">
+                                    Transaction Details
+                                </p>
+
+                                <h2
+                                    id="transaction-modal-title"
+                                    className="text-xl sm:text-2xl font-bold text-gray-800"
+                                >
+                                    {selectedTransaction.title}
+                                </h2>
+                            </div>
+
+                            {/* Close Button */}
                             <button
                                 type="button"
                                 onClick={() => setSelectedTransaction(null)}
                                 aria-label="Close transaction details"
-                                className="w-9 h-9 rounded-full
-                                bg-slate-100 text-slate-600
-                                hover:bg-slate-200 transition"
+                                className="flex-shrink-0 w-9 h-9 rounded-full
+                                bg-gray-100 text-gray-600 hover:bg-gray-200
+                                transition"
                             >
                                 ✕
                             </button>
+
                         </div>
 
-                        {/* Transaction information */}
-                        <div className="space-y-4">
 
-                            <div>
-                                <p className="text-sm text-slate-500">
-                                    Transaction Title
-                                </p>
-                                <p className="font-semibold text-slate-800">
-                                    {selectedTransaction.title}
-                                </p>
-                            </div>
+                        {/* Transaction Amount */}
+                        <div className="rounded-2xl bg-gray-50 p-5 mb-6">
 
-                            <div>
-                                <p className="text-sm text-slate-500">
-                                    Amount
-                                </p>
-                                <p className={`text-2xl font-bold ${
+                            <p className="text-sm text-gray-500 mb-2">
+                                Transaction Amount
+                            </p>
+
+                            <h3
+                                className={`text-3xl sm:text-4xl font-bold ${
                                     selectedTransaction.type === "Income"
-                                        ? "text-emerald-600"
+                                        ? "text-green-600"
                                         : "text-red-600"
-                                }`}>
-                                    {selectedTransaction.type === "Income" ? "+" : "-"}
-                                    ₦{Number(selectedTransaction.amount).toLocaleString()}
-                                </p>
-                            </div>
+                                }`}
+                            >
+                                {selectedTransaction.type === "Income" ? "+" : "-"}
+                                ₦{Number(selectedTransaction.amount).toLocaleString()}
+                            </h3>
 
-                            <div>
-                                <p className="text-sm text-slate-500">
-                                    Transaction Type
-                                </p>
-                                <p className="font-semibold text-slate-800">
-                                    {selectedTransaction.type}
-                                </p>
-                            </div>
+                            <span
+                                className={`inline-block mt-3 px-3 py-1 rounded-full
+                                text-xs font-semibold ${
+                                    selectedTransaction.type === "Income"
+                                        ? "bg-green-100 text-green-700"
+                                        : "bg-red-100 text-red-700"
+                                }`}
+                            >
+                                {selectedTransaction.type}
+                            </span>
 
-                            <div>
-                                <p className="text-sm text-slate-500">
+                        </div>
+
+
+                        {/* Transaction Information */}
+                        <div className="space-y-4 mb-7">
+
+                            <div className="flex justify-between gap-4 border-b
+                            border-gray-100 pb-3">
+                                <span className="text-sm text-gray-500">
                                     Category
-                                </p>
-                                <p className="font-semibold text-slate-800">
+                                </span>
+
+                                <span className="text-sm font-semibold text-gray-800">
                                     {selectedTransaction.category}
-                                </p>
+                                </span>
                             </div>
 
-                            <div>
-                                <p className="text-sm text-slate-500">
+                            <div className="flex justify-between gap-4 border-b
+                            border-gray-100 pb-3">
+                                <span className="text-sm text-gray-500">
                                     Date
-                                </p>
-                                <p className="font-semibold text-slate-800">
-                                    {selectedTransaction.date}
-                                </p>
+                                </span>
+
+                                <span className="text-sm font-semibold text-gray-800">
+                                    {selectedTransaction.date
+                                        ? new Date(
+                                            selectedTransaction.date + "T00:00:00"
+                                        ).toLocaleDateString("en-GB", {
+                                            day: "numeric",
+                                            month: "long",
+                                            year: "numeric"
+                                        })
+                                        : "No date available"}
+                                </span>
+                            </div>
+
+                            {/* Transaction Reference ID */}
+                            <div className="flex flex-col sm:flex-row sm:items-center
+                            justify-between gap-3 border-b border-gray-100 pb-3">
+
+                                <span className="text-sm text-gray-500">
+                                    Reference ID
+                                </span>
+
+                                <div className="flex items-center justify-between gap-3">
+
+                                    <span className="text-sm font-semibold text-blue-600
+                                    break-all">
+                                        FIN-{String(selectedTransaction.id)
+                                            .slice(-8)
+                                            .toUpperCase()}
+                                    </span>
+
+                                    {/* Copy Reference ID Button */}
+                                    <button
+                                        type="button"
+                                        onClick={async () => {
+                                            const referenceId = `FIN-${String(
+                                                selectedTransaction.id
+                                            ).slice(-8).toUpperCase()}`;
+
+                                            try {
+                                                await navigator.clipboard.writeText(referenceId);
+                                                setCopiedReference(true);
+                                            } catch (error) {
+                                                window.alert(
+                                                    "Unable to copy the reference ID. Please copy it manually."
+                                                );
+                                            }
+                                        }}
+                                        className="shrink-0 rounded-lg bg-blue-50
+                                        px-3 py-2 text-xs font-semibold text-blue-600
+                                        hover:bg-blue-100 transition"
+                                    >
+                                        {copiedReference ? "Copied!" : "Copy ID"}
+                                    </button>
+
+                                </div>
+
+                            </div>
+
+                            <div className="flex justify-between gap-4">
+                                <span className="text-sm text-gray-500">
+                                    Transaction Type
+                                </span>
+
+                                <span className="text-sm font-semibold text-gray-800">
+                                    {selectedTransaction.type}
+                                </span>
                             </div>
 
                         </div>
 
-                        {/* Edit transaction button */}
-                        <button
-                            type="button"
-                            onClick={() => {
-                                onEdit(selectedTransaction.id);
-                                setSelectedTransaction(null);
-                            }}
-                            className="w-full mt-7 py-3 rounded-xl
-                            bg-emerald-600 text-white font-semibold
-                            hover:bg-emerald-700 transition"
-                        >
-                            Edit Transaction
-                        </button>
 
-                        {/* Delete transaction button */}
-                        <button
-                            type="button"
-                            onClick={() => {
-                                const deleted = onDelete(selectedTransaction.id);
+                        {/* =========================================
+                            PRINTABLE TRANSACTION RECEIPT
+                        ========================================= */}
 
-                                // Close the modal only if deletion succeeds.
-                                if (deleted) {
+                        <div id="transaction-receipt" className="hidden">
+
+                            <div className="max-w-md mx-auto border border-gray-200
+                            rounded-xl p-8 bg-white">
+
+                                {/* Receipt Header */}
+                                <div className="text-center border-b border-dashed
+                                border-gray-300 pb-5 mb-5">
+
+                                    <h1 className="text-3xl font-bold text-blue-600">
+                                        FinFlow
+                                    </h1>
+
+                                    <p className="text-sm text-gray-500 mt-2">
+                                        Transaction Receipt
+                                    </p>
+
+                                    <p className="text-xs text-gray-400 mt-1">
+                                        Your finances, organised.
+                                    </p>
+
+                                </div>
+
+                                {/* Receipt Amount */}
+                                <div className="text-center mb-6">
+
+                                    <p className="text-sm text-gray-500">
+                                        Transaction Amount
+                                    </p>
+
+                                    <h2 className="text-3xl font-bold text-gray-900 mt-2">
+                                        {selectedTransaction.type === "Income" ? "+" : "-"}
+                                        ₦{Number(selectedTransaction.amount).toLocaleString()}
+                                    </h2>
+
+                                    <span className="inline-block mt-3 text-sm font-semibold
+                                    text-gray-600">
+                                        {selectedTransaction.type}
+                                    </span>
+
+                                </div>
+
+                                {/* Receipt Information */}
+                                <div className="space-y-4 text-sm">
+
+                                    <div className="flex justify-between gap-4">
+                                        <span className="text-gray-500">Description</span>
+                                        <span className="font-semibold text-gray-800 text-right">
+                                            {selectedTransaction.title}
+                                        </span>
+                                    </div>
+
+                                    <div className="flex justify-between gap-4">
+                                        <span className="text-gray-500">Category</span>
+                                        <span className="font-semibold text-gray-800">
+                                            {selectedTransaction.category}
+                                        </span>
+                                    </div>
+
+                                    <div className="flex justify-between gap-4">
+                                        <span className="text-gray-500">Date</span>
+                                        <span className="font-semibold text-gray-800">
+                                            {selectedTransaction.date}
+                                        </span>
+                                    </div>
+
+                                    <div className="flex justify-between gap-4">
+                                        <span className="text-gray-500">Reference ID</span>
+                                        <span className="font-semibold text-blue-600 text-right
+                                        break-all">
+                                            FIN-{String(selectedTransaction.id)
+                                                .slice(-8)
+                                                .toUpperCase()}
+                                        </span>
+                                    </div>
+
+                                </div>
+
+                                {/* Receipt Footer */}
+                                <div className="border-t border-dashed border-gray-300
+                                mt-7 pt-5 text-center">
+
+                                    <p className="text-sm font-semibold text-gray-700">
+                                        Thank you for using FinFlow!
+                                    </p>
+
+                                    <p className="text-xs text-gray-400 mt-2">
+                                        This is a personal finance record.
+                                    </p>
+
+                                </div>
+
+                            </div>
+
+                        </div>
+
+
+                        {/* Modal Action Buttons */}
+                        <div className="space-y-3">
+
+                            {/* Download PDF Receipt */}
+                            <button
+                                type="button"
+                                onClick={downloadReceipt}
+                                className="w-full rounded-xl bg-blue-600 py-3
+                                text-white font-semibold hover:bg-blue-700
+                                transition"
+                            >
+                                Download PDF Receipt
+                            </button>
+
+
+                            {/* Print Transaction Receipt */}
+                            <button
+                                type="button"
+                                onClick={() => window.print()}
+                                className="w-full rounded-xl bg-gray-800 py-3
+                                text-white font-semibold hover:bg-gray-900
+                                transition"
+                            >
+                                Print Receipt
+                            </button>
+
+
+                            {/* Edit Transaction */}
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    onEdit(selectedTransaction.id);
                                     setSelectedTransaction(null);
-                                }
-                            }}
-                            className="w-full mt-3 py-3 rounded-xl
-                            bg-red-50 text-red-600 font-semibold
-                            hover:bg-red-100 transition"
-                        >
-                            Delete Transaction
-                        </button>
+                                }}
+                                className="w-full rounded-xl bg-blue-600 py-3
+                                text-white font-semibold hover:bg-blue-700
+                                transition"
+                            >
+                                Edit Transaction
+                            </button>
 
-                        {/* Close button */}
-                        <button
-                            type="button"
-                            onClick={() => setSelectedTransaction(null)}
-                            className="w-full mt-3 py-3 rounded-xl
-                            bg-slate-100 text-slate-700 font-semibold
-                            hover:bg-slate-200 transition"
-                        >
-                            Close
-                        </button>
+
+                            {/* Delete Transaction */}
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    const deleted = onDelete(selectedTransaction.id);
+
+                                    if (deleted) {
+                                        setSelectedTransaction(null);
+                                    }
+                                }}
+                                className="w-full rounded-xl bg-red-50 py-3
+                                text-red-600 font-semibold hover:bg-red-100
+                                transition"
+                            >
+                                Delete Transaction
+                            </button>
+
+
+                            {/* Close Modal */}
+                            <button
+                                type="button"
+                                onClick={() => setSelectedTransaction(null)}
+                                className="w-full rounded-xl border border-gray-200
+                                py-3 text-gray-600 font-semibold
+                                hover:bg-gray-50 transition"
+                            >
+                                Close
+                            </button>
+
+                        </div>
 
                     </div>
                 </div>
