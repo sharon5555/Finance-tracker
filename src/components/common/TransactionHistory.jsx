@@ -12,6 +12,7 @@ import { useEffect, useState } from "react";
 // - Sort transactions
 // - Paginate through transaction results with compact numbered buttons and ellipses
 // - See how many transactions are displayed
+// - View detailed transaction info via modal
 // - Edit transactions
 // - Delete transactions
 // - Clearly identify Income and Expense transactions
@@ -40,6 +41,9 @@ function TransactionHistory({
 
     // Allow users to choose how many transactions appear per page.
     const [itemsPerPage, setItemsPerPage] = useState(10);
+
+    // Store the transaction the user wants to view.
+    const [selectedTransaction, setSelectedTransaction] = useState(null);
 
 
     /*
@@ -686,6 +690,16 @@ function TransactionHistory({
                                     </p>
 
 
+                                    {/* View Details button */}
+                                    <button
+                                        type="button"
+                                        onClick={() => setSelectedTransaction(transaction)}
+                                        className="px-3 py-2 rounded-lg text-sm font-medium text-emerald-700 bg-emerald-50 hover:bg-emerald-100 transition"
+                                    >
+                                        View Details
+                                    </button>
+
+
                                     {/* Edit button */}
                                     <button
                                         type="button"
@@ -830,6 +844,97 @@ function TransactionHistory({
                 )}
 
             </div>
+
+
+            {/* Transaction Details Modal */}
+            {selectedTransaction && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 p-4">
+
+                    <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl">
+
+                        {/* Modal heading */}
+                        <div className="flex items-center justify-between mb-6">
+                            <h2 className="text-xl font-bold text-slate-800">
+                                Transaction Details
+                            </h2>
+
+                            <button
+                                type="button"
+                                onClick={() => setSelectedTransaction(null)}
+                                aria-label="Close transaction details"
+                                className="w-9 h-9 rounded-full bg-slate-100 text-slate-600 hover:bg-slate-200 transition"
+                            >
+                                ✕
+                            </button>
+                        </div>
+
+                        {/* Transaction information */}
+                        <div className="space-y-4">
+
+                            <div>
+                                <p className="text-sm text-slate-500">
+                                    Transaction Title
+                                </p>
+                                <p className="font-semibold text-slate-800">
+                                    {selectedTransaction.title}
+                                </p>
+                            </div>
+
+                            <div>
+                                <p className="text-sm text-slate-500">
+                                    Amount
+                                </p>
+                                <p className={`text-2xl font-bold ${
+                                    selectedTransaction.type === "Income"
+                                        ? "text-emerald-600"
+                                        : "text-red-600"
+                                }`}>
+                                    {selectedTransaction.type === "Income" ? "+" : "-"}
+                                    ₦{Number(selectedTransaction.amount).toLocaleString()}
+                                </p>
+                            </div>
+
+                            <div>
+                                <p className="text-sm text-slate-500">
+                                    Transaction Type
+                                </p>
+                                <p className="font-semibold text-slate-800">
+                                    {selectedTransaction.type}
+                                </p>
+                            </div>
+
+                            <div>
+                                <p className="text-sm text-slate-500">
+                                    Category
+                                </p>
+                                <p className="font-semibold text-slate-800">
+                                    {selectedTransaction.category}
+                                </p>
+                            </div>
+
+                            <div>
+                                <p className="text-sm text-slate-500">
+                                    Date
+                                </p>
+                                <p className="font-semibold text-slate-800">
+                                    {selectedTransaction.date}
+                                </p>
+                            </div>
+
+                        </div>
+
+                        {/* Close button */}
+                        <button
+                            type="button"
+                            onClick={() => setSelectedTransaction(null)}
+                            className="w-full mt-7 py-3 rounded-xl bg-emerald-600 text-white font-semibold hover:bg-emerald-700 transition"
+                        >
+                            Close
+                        </button>
+
+                    </div>
+                </div>
+            )}
 
         </section>
     );
