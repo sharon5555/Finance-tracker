@@ -12,7 +12,7 @@ import { useEffect, useState } from "react";
 // - Sort transactions
 // - Paginate through transaction results with compact numbered buttons and ellipses
 // - See how many transactions are displayed
-// - View detailed transaction info via modal
+// - View detailed transaction info via modal (with Escape key & outside click support)
 // - Edit transactions
 // - Delete transactions
 // - Clearly identify Income and Expense transactions
@@ -58,6 +58,33 @@ function TransactionHistory({
         endDate,
         itemsPerPage
     ]);
+
+
+    /*
+        Close the transaction details modal
+        when the user presses the Escape key.
+    */
+    useEffect(() => {
+        // Do nothing if the modal is not open.
+        if (!selectedTransaction) {
+            return;
+        }
+
+        function handleEscapeKey(event) {
+            if (event.key === "Escape") {
+                setSelectedTransaction(null);
+            }
+        }
+
+        // Listen for keyboard input.
+        window.addEventListener("keydown", handleEscapeKey);
+
+        // Remove the listener when the modal closes
+        // or the component is removed.
+        return () => {
+            window.removeEventListener("keydown", handleEscapeKey);
+        };
+    }, [selectedTransaction]);
 
 
     // Reset the search, filter, date range, sorting, and pagination options.
@@ -694,7 +721,9 @@ function TransactionHistory({
                                     <button
                                         type="button"
                                         onClick={() => setSelectedTransaction(transaction)}
-                                        className="px-3 py-2 rounded-lg text-sm font-medium text-emerald-700 bg-emerald-50 hover:bg-emerald-100 transition"
+                                        className="px-3 py-2 rounded-lg text-sm font-medium
+                                        text-emerald-700 bg-emerald-50
+                                        hover:bg-emerald-100 transition"
                                     >
                                         View Details
                                     </button>
@@ -848,9 +877,17 @@ function TransactionHistory({
 
             {/* Transaction Details Modal */}
             {selectedTransaction && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 p-4">
+                <div
+                    className="fixed inset-0 z-50 flex items-center
+                    justify-center bg-slate-900/60 p-4"
+                    onClick={() => setSelectedTransaction(null)}
+                >
 
-                    <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl">
+                    <div
+                        className="w-full max-w-md rounded-2xl
+                        bg-white p-6 shadow-2xl"
+                        onClick={(event) => event.stopPropagation()}
+                    >
 
                         {/* Modal heading */}
                         <div className="flex items-center justify-between mb-6">
@@ -862,7 +899,9 @@ function TransactionHistory({
                                 type="button"
                                 onClick={() => setSelectedTransaction(null)}
                                 aria-label="Close transaction details"
-                                className="w-9 h-9 rounded-full bg-slate-100 text-slate-600 hover:bg-slate-200 transition"
+                                className="w-9 h-9 rounded-full
+                                bg-slate-100 text-slate-600
+                                hover:bg-slate-200 transition"
                             >
                                 ✕
                             </button>
@@ -927,7 +966,9 @@ function TransactionHistory({
                         <button
                             type="button"
                             onClick={() => setSelectedTransaction(null)}
-                            className="w-full mt-7 py-3 rounded-xl bg-emerald-600 text-white font-semibold hover:bg-emerald-700 transition"
+                            className="w-full mt-7 py-3 rounded-xl
+                            bg-emerald-600 text-white font-semibold
+                            hover:bg-emerald-700 transition"
                         >
                             Close
                         </button>
