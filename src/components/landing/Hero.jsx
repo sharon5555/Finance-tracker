@@ -342,7 +342,7 @@ function Hero() {
 
         // If the user clicks Cancel, stop the function.
         if (!confirmDelete) {
-            return;
+            return false;
         }
 
         // Remove the transaction with the matching ID.
@@ -351,6 +351,8 @@ function Hero() {
                 (transaction) => transaction.id !== id
             )
         );
+
+        return true;
     }
 
 

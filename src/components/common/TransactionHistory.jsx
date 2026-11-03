@@ -976,6 +976,24 @@ function TransactionHistory({
                             Edit Transaction
                         </button>
 
+                        {/* Delete transaction button */}
+                        <button
+                            type="button"
+                            onClick={() => {
+                                const deleted = onDelete(selectedTransaction.id);
+
+                                // Close the modal only if deletion succeeds.
+                                if (deleted) {
+                                    setSelectedTransaction(null);
+                                }
+                            }}
+                            className="w-full mt-3 py-3 rounded-xl
+                            bg-red-50 text-red-600 font-semibold
+                            hover:bg-red-100 transition"
+                        >
+                            Delete Transaction
+                        </button>
+
                         {/* Close button */}
                         <button
                             type="button"
