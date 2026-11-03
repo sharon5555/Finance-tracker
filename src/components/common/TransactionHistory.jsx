@@ -387,14 +387,37 @@ function TransactionHistory({
     );
 
 
-    // Export the currently displayed transactions as a CSV file.
+    // =========================================
+    // EXPORT TRANSACTIONS WITH FINANCIAL SUMMARY
+    // =========================================
     function exportTransactions() {
+
         // Stop if there are no transactions to export.
         if (sortedTransactions.length === 0) {
+            window.alert("There are no transactions to export.");
             return;
         }
 
-        // These are the column headings in the downloaded file.
+        // Calculate income from the displayed transactions.
+        const totalIncome = sortedTransactions
+            .filter((transaction) => transaction.type === "Income")
+            .reduce(
+                (total, transaction) => total + Number(transaction.amount),
+                0
+            );
+
+        // Calculate expenses from the displayed transactions.
+        const totalExpenses = sortedTransactions
+            .filter((transaction) => transaction.type === "Expense")
+            .reduce(
+                (total, transaction) => total + Number(transaction.amount),
+                0
+            );
+
+        // Calculate the net amount.
+        const netBalance = totalIncome - totalExpenses;
+
+        // Prepare CSV headings.
         const headers = [
             "Date",
             "Title",
@@ -403,43 +426,64 @@ function TransactionHistory({
             "Amount"
         ];
 
-        // Convert each transaction into a CSV row.
+        // Convert transaction records into CSV rows.
         const rows = sortedTransactions.map((transaction) => [
             transaction.date,
             transaction.title,
             transaction.category,
             transaction.type,
-            transaction.amount
+            Number(transaction.amount)
         ]);
 
-        // Combine the headings and transaction rows.
-        const csvContent = [headers, ...rows]
-            .map((row) =>
-                row.map((value) =>
-                    `"${String(value ?? "").replace(/"/g, '""')}"`
-                ).join(",")
-            )
-            .join("\n");
+        // Escape commas, quotes and special characters in CSV values.
+        const escapeCSV = (value) => {
+            const text = String(value ?? "");
+            return `"${text.replace(/"/g, '""')}"`;
+        };
+
+        // Build the transaction CSV.
+        const transactionCSV = [
+            headers.map(escapeCSV).join(","),
+            ...rows.map((row) => row.map(escapeCSV).join(","))
+        ];
+
+        // Add a financial summary at the bottom.
+        const summaryRows = [
+            [],
+            ["FINANCIAL SUMMARY"],
+            ["Total Income", totalIncome],
+            ["Total Expenses", totalExpenses],
+            ["Net Balance", netBalance],
+            ["Transactions Exported", sortedTransactions.length]
+        ];
+
+        // Convert summary rows into CSV format.
+        const summaryCSV = summaryRows.map((row) =>
+            row.map(escapeCSV).join(",")
+        );
+
+        // Combine transaction records and summary.
+        const csvContent = [
+            ...transactionCSV,
+            ...summaryCSV
+        ].join("\n");
 
         // Create a downloadable CSV file.
-        const file = new Blob(
+        const blob = new Blob(
             ["\uFEFF" + csvContent],
             { type: "text/csv;charset=utf-8;" }
         );
 
-        // Create a temporary download link.
-        const url = URL.createObjectURL(file);
-        const link = document.createElement("a");
+        const url = URL.createObjectURL(blob);
 
+        const link = document.createElement("a");
         link.href = url;
         link.download = "FinFlow-Transactions.csv";
 
-        // Start the download.
         document.body.appendChild(link);
         link.click();
-
-        // Clean up the temporary link and URL.
         document.body.removeChild(link);
+
         URL.revokeObjectURL(url);
     }
 
