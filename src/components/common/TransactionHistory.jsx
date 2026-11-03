@@ -549,11 +549,28 @@ function TransactionHistory({
                     sortedTransactions contains the total number
                     of matching transactions.
                 */}
+                {/* Display the current transaction range */}
                 <div className="px-5 py-3 bg-slate-50 border-b border-slate-100">
 
                     <p className="text-sm text-slate-500">
-
                         Showing{" "}
+
+                        <span className="font-semibold text-slate-700">
+                            {sortedTransactions.length === 0
+                                ? 0
+                                : startIndex + 1}
+                        </span>
+
+                        {" - "}
+
+                        <span className="font-semibold text-slate-700">
+                            {Math.min(
+                                startIndex + paginatedTransactions.length,
+                                sortedTransactions.length
+                            )}
+                        </span>
+
+                        {" "}of{" "}
 
                         <span className="font-semibold text-slate-700">
                             {sortedTransactions.length}
@@ -564,7 +581,6 @@ function TransactionHistory({
                         {sortedTransactions.length === 1
                             ? "transaction"
                             : "transactions"}
-
                     </p>
 
                 </div>
