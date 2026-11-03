@@ -2,6 +2,8 @@
 import { useEffect, useState } from "react";
 // Import jsPDF for generating downloadable transaction receipts.
 import { jsPDF } from "jspdf";
+// Import XLSX for generating Excel workbooks.
+import * as XLSX from "xlsx";
 
 
 // TransactionHistory displays the user's complete transaction history.
@@ -488,6 +490,113 @@ function TransactionHistory({
     }
 
 
+    // =========================================
+    // EXPORT TRANSACTIONS TO EXCEL
+    // =========================================
+
+    function exportToExcel() {
+
+        // Check whether there are transactions to export.
+        if (sortedTransactions.length === 0) {
+            window.alert("There are no transactions to export.");
+            return;
+        }
+
+        // Calculate total income.
+        const totalIncome = sortedTransactions
+            .filter((transaction) => transaction.type === "Income")
+            .reduce(
+                (total, transaction) =>
+                    total + Number(transaction.amount || 0),
+                0
+            );
+
+        // Calculate total expenses.
+        const totalExpenses = sortedTransactions
+            .filter((transaction) => transaction.type === "Expense")
+            .reduce(
+                (total, transaction) =>
+                    total + Number(transaction.amount || 0),
+                0
+            );
+
+        // Calculate the net balance.
+        const netBalance = totalIncome - totalExpenses;
+
+        // Prepare transaction data for Excel.
+        const transactionData = sortedTransactions.map((transaction) => ({
+            Date: transaction.date,
+            Title: transaction.title,
+            Category: transaction.category,
+            Type: transaction.type,
+            Amount: Number(transaction.amount),
+            "Reference ID": `FIN-${String(transaction.id)
+                .slice(-8)
+                .toUpperCase()}`
+        }));
+
+        // Create the Transactions worksheet.
+        const transactionSheet = XLSX.utils.json_to_sheet(
+            transactionData
+        );
+
+        // Set column widths.
+        transactionSheet["!cols"] = [
+            { wch: 15 },
+            { wch: 25 },
+            { wch: 20 },
+            { wch: 15 },
+            { wch: 18 },
+            { wch: 22 }
+        ];
+
+        // Prepare financial summary data.
+        const summaryData = [
+            ["FINFLOW FINANCIAL SUMMARY"],
+            [],
+            ["Financial Overview", "Amount"],
+            ["Total Income", totalIncome],
+            ["Total Expenses", totalExpenses],
+            ["Net Balance", netBalance],
+            [],
+            ["Transactions Exported", sortedTransactions.length]
+        ];
+
+        // Create the Financial Summary worksheet.
+        const summarySheet = XLSX.utils.aoa_to_sheet(
+            summaryData
+        );
+
+        // Set summary column widths.
+        summarySheet["!cols"] = [
+            { wch: 30 },
+            { wch: 20 }
+        ];
+
+        // Create a new Excel workbook.
+        const workbook = XLSX.utils.book_new();
+
+        // Add both worksheets to the workbook.
+        XLSX.utils.book_append_sheet(
+            workbook,
+            transactionSheet,
+            "Transactions"
+        );
+
+        XLSX.utils.book_append_sheet(
+            workbook,
+            summarySheet,
+            "Financial Summary"
+        );
+
+        // Download the Excel workbook.
+        XLSX.writeFile(
+            workbook,
+            "FinFlow-Financial-Report.xlsx"
+        );
+    }
+
+
     return (
         <section className="mt-10">
 
@@ -700,6 +809,18 @@ function TransactionHistory({
                                 disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                                 Export CSV
+                            </button>
+
+                            {/* Export Transactions to Excel */}
+                            <button
+                                type="button"
+                                onClick={exportToExcel}
+                                disabled={sortedTransactions.length === 0}
+                                className="rounded-xl bg-green-600 px-5 py-3
+                                text-white font-semibold hover:bg-green-700
+                                transition disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                                Export Excel
                             </button>
 
                         </div>
