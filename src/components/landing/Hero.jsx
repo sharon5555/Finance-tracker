@@ -29,6 +29,7 @@ import GoalCard from "../common/GoalCard";
 import GoalForm from "../common/GoalForm";
 import TransactionHistory from "../common/TransactionHistory";
 import MonthlyComparison from "../common/MonthlyComparison";
+import MonthlyInsights from "../common/MonthlyInsights";
 
 // Import chart component.
 import FinanceChart from "../charts/FinanceChart";
@@ -690,10 +691,14 @@ function Hero() {
                     </div>
 
                     {/*
-                        Monthly Financial Comparison
+                        Monthly Financial Comparison & Insights
                     */}
-                    <div className="mt-8">
+                    <div className="mt-8 space-y-6">
                         <MonthlyComparison
+                            transactions={transactions}
+                        />
+
+                        <MonthlyInsights
                             transactions={transactions}
                         />
                     </div>
