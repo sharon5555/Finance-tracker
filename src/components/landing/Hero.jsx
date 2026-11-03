@@ -30,6 +30,8 @@ import GoalForm from "../common/GoalForm";
 import TransactionHistory from "../common/TransactionHistory";
 import MonthlyComparison from "../common/MonthlyComparison";
 import MonthlyInsights from "../common/MonthlyInsights";
+import SpendingAlerts from "../common/SpendingAlerts";
+import BudgetPlanner from "../common/BudgetPlanner";
 
 // Import chart component.
 import FinanceChart from "../charts/FinanceChart";
@@ -113,6 +115,22 @@ function Hero() {
     });
 
 
+    // Store the user's monthly budgets.
+    const [budgets, setBudgets] = useState(() => {
+        try {
+            const savedData = JSON.parse(
+                localStorage.getItem("finflow_data") || "{}"
+            );
+
+            return Array.isArray(savedData.budgets)
+                ? savedData.budgets
+                : [];
+        } catch {
+            return [];
+        }
+    });
+
+
     /*
         Save all FinFlow data whenever transactions change.
 
@@ -135,6 +153,9 @@ function Hero() {
             //Save all financial goals.
             goals: goals,
 
+            //Save all monthly budgets.
+            budgets: budgets,
+
             // placeholder for future settings.
             settings:{}
 
@@ -147,7 +168,7 @@ function Hero() {
             JSON.stringify(finflowData)
         );
 
-    }, [transactions, goals]);
+    }, [transactions, goals, budgets]);
 
 
         // PART C
@@ -377,6 +398,39 @@ function Hero() {
         // Store the transaction so TransactionForm
         // can display its information.
         setEditingTransaction(transactionToEdit);
+    }
+
+
+    // Add a new budget or update an existing category's budget.
+    function addBudget(newBudget) {
+        setBudgets((previousBudgets) => {
+            const existingBudget = previousBudgets.find(
+                (budget) => budget.category === newBudget.category
+            );
+
+            if (existingBudget) {
+                return previousBudgets.map((budget) =>
+                    budget.category === newBudget.category
+                        ? { ...budget, amount: newBudget.amount }
+                        : budget
+                );
+            }
+
+            return [
+                ...previousBudgets,
+                {
+                    ...newBudget,
+                    id: Date.now().toString()
+                }
+            ];
+        });
+    }
+
+    // Delete a budget.
+    function deleteBudget(id) {
+        setBudgets((previousBudgets) =>
+            previousBudgets.filter((budget) => budget.id !== id)
+        );
     }
 
 
@@ -691,7 +745,7 @@ function Hero() {
                     </div>
 
                     {/*
-                        Monthly Financial Comparison & Insights
+                        Monthly Financial Comparison, Insights & Spending Alerts
                     */}
                     <div className="mt-8 space-y-6">
                         <MonthlyComparison
@@ -700,6 +754,17 @@ function Hero() {
 
                         <MonthlyInsights
                             transactions={transactions}
+                        />
+
+                        <SpendingAlerts
+                            transactions={transactions}
+                        />
+
+                        <BudgetPlanner
+                            budgets={budgets}
+                            transactions={transactions}
+                            onAddBudget={addBudget}
+                            onDeleteBudget={deleteBudget}
                         />
                     </div>
 
