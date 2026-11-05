@@ -68,18 +68,7 @@ function StatCard({title, amount, color}) {
                 {amount}
             </h2>
 
-            {/* 
-                Supporting text:
-                This is temporary information for our UI.
-                Later, we can make this percentage dynamic.
-            */}
-
-            <p className="text-sm text-slate-400 mt-2">
-                Updated this month
-            </p>
         </div>
-
-        
     )
 }
 

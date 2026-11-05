@@ -1,17 +1,19 @@
-
 import React from "react";
 
 function SpendingAlerts({ transactions = [] }) {
     // Get the current and previous month.
     const today = new Date();
+    const currentYear = today.getFullYear();
+    const currentMonthIndex = today.getMonth();
+    const currentDay = today.getDate();
 
-    const currentMonth = `${today.getFullYear()}-${String(
-        today.getMonth() + 1
+    const currentMonth = `${currentYear}-${String(
+        currentMonthIndex + 1
     ).padStart(2, "0")}`;
 
     const previousDate = new Date(
-        today.getFullYear(),
-        today.getMonth() - 1,
+        currentYear,
+        currentMonthIndex - 1,
         1
     );
 
@@ -19,10 +21,10 @@ function SpendingAlerts({ transactions = [] }) {
         previousDate.getMonth() + 1
     ).padStart(2, "0")}`;
 
-    // Store this month's financial information.
+    // Store this month's financial information and period-matched previous expenses.
     let monthlyIncome = 0;
     let monthlyExpenses = 0;
-    let previousExpenses = 0;
+    let previousExpensesEquivalent = 0;
 
     // Store expenses according to their categories.
     const categorySpending = {};
@@ -31,16 +33,20 @@ function SpendingAlerts({ transactions = [] }) {
     transactions.forEach((transaction) => {
         if (!transaction.date) return;
 
-        const transactionMonth = String(transaction.date).slice(0, 7);
+        const transactionDateStr = String(transaction.date);
+        const transactionMonth = transactionDateStr.slice(0, 7);
         const amount = Number(transaction.amount) || 0;
+        
+        // Normalise transaction type to handle variations safely
+        const type = transaction.type ? String(transaction.type).trim().toLowerCase() : "";
 
         // Calculate current month's income and expenses.
         if (transactionMonth === currentMonth) {
-            if (transaction.type === "Income") {
+            if (type === "income") {
                 monthlyIncome += amount;
             }
 
-            if (transaction.type === "Expense") {
+            if (type === "expense") {
                 monthlyExpenses += amount;
 
                 const category = transaction.category || "Other";
@@ -50,12 +56,12 @@ function SpendingAlerts({ transactions = [] }) {
             }
         }
 
-        // Calculate previous month's expenses.
-        if (
-            transactionMonth === previousMonth &&
-            transaction.type === "Expense"
-        ) {
-            previousExpenses += amount;
+        // Calculate previous month's expenses up to the equivalent day-of-month (month-to-date comparison)
+        if (type === "expense" && transactionMonth === previousMonth) {
+            const dayOfTransaction = parseInt(transactionDateStr.slice(8, 10), 10);
+            if (!isNaN(dayOfTransaction) && dayOfTransaction <= currentDay) {
+                previousExpensesEquivalent += amount;
+            }
         }
     });
 
@@ -64,10 +70,10 @@ function SpendingAlerts({ transactions = [] }) {
         (a, b) => b[1] - a[1]
     )[0];
 
-    // Calculate the increase in spending.
+    // Calculate the increase in spending using equivalent month-to-date periods.
     const spendingIncrease =
-        previousExpenses > 0
-            ? ((monthlyExpenses - previousExpenses) / previousExpenses) * 100
+        previousExpensesEquivalent > 0
+            ? ((monthlyExpenses - previousExpensesEquivalent) / previousExpensesEquivalent) * 100
             : 0;
 
     // Format amounts as Nigerian Naira.
@@ -89,16 +95,16 @@ function SpendingAlerts({ transactions = [] }) {
         });
     }
 
-    // Alert 2: Spending has increased by more than 20%.
+    // Alert 2: Spending has increased by more than 20% compared to the same period last month.
     if (
-        previousExpenses > 0 &&
+        previousExpensesEquivalent > 0 &&
         spendingIncrease > 20
     ) {
         alerts.push({
             title: "Your spending has increased",
-            message: `Your expenses have increased by ${spendingIncrease.toFixed(
+            message: `Your month-to-date expenses have increased by ${spendingIncrease.toFixed(
                 1
-            )}% compared with last month.`,
+            )}% compared with the same period last month.`,
             type: "warning",
             icon: "📈"
         });
@@ -132,7 +138,7 @@ function SpendingAlerts({ transactions = [] }) {
                 </h2>
 
                 <p className="text-sm text-gray-500 mt-1">
-                    Important updates about your spending habits.
+                    Important updates about your spending habits (Month-to-Date comparison).
                 </p>
             </div>
 

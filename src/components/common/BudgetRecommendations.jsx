@@ -1,4 +1,3 @@
-
 import React from "react";
 
 function BudgetRecommendations({
@@ -21,14 +20,14 @@ function BudgetRecommendations({
         ).padStart(2, "0")}`;
     });
 
-    // Calculate total spending for each category.
+    // Calculate total spending for each category with normalised keys.
     const categoryTotals = {};
 
     transactions.forEach((transaction) => {
-        if (
-            transaction.type !== "Expense" ||
-            !transaction.date
-        ) {
+        if (!transaction.date || !transaction.type) return;
+
+        const type = String(transaction.type).trim().toLowerCase();
+        if (type !== "expense") {
             return;
         }
 
@@ -39,32 +38,40 @@ function BudgetRecommendations({
             return;
         }
 
-        const category = transaction.category || "Other";
+        const rawCategory = transaction.category || "Other";
+        const normalizedCategory = String(rawCategory).trim().toLowerCase();
         const amount = Number(transaction.amount) || 0;
 
-        if (!categoryTotals[category]) {
-            categoryTotals[category] = 0;
+        if (!categoryTotals[normalizedCategory]) {
+            categoryTotals[normalizedCategory] = {
+                originalName: rawCategory,
+                total: 0
+            };
         }
 
-        categoryTotals[category] += amount;
+        categoryTotals[normalizedCategory].total += amount;
     });
 
     // Create a recommendation for each category with recorded spending.
     const recommendations = Object.entries(categoryTotals)
-        .map(([category, totalSpent]) => {
-            // Include months with no spending in the three-month average.
-            const averageSpending = totalSpent / 3;
+        .map(([normalizedCategory, data]) => {
+            // Include months with no spending in the three-month average (averaged over 3 months).
+            const averageSpending = data.total / 3;
 
             // Add a 10% buffer and round up to the nearest ₦1,000.
             const suggestedBudget =
                 Math.ceil((averageSpending * 1.1) / 1000) * 1000;
 
+            // Normalise category matching for existing budgets
             const existingBudget = budgets.find(
-                (budget) => budget.category === category
+                (budget) =>
+                    budget.category &&
+                    String(budget.category).trim().toLowerCase() === normalizedCategory
             );
 
             return {
-                category,
+                category: data.originalName,
+                normalizedCategory,
                 averageSpending,
                 suggestedBudget,
                 currentBudget: existingBudget
@@ -90,7 +97,7 @@ function BudgetRecommendations({
 
                 <p className="text-sm text-gray-500 mt-1">
                     Suggestions based on your spending over the last three
-                    completed months.
+                    completed months (averaged across 3 months, including zero-spend months).
                 </p>
             </div>
 
@@ -125,7 +132,7 @@ function BudgetRecommendations({
 
                         return (
                             <div
-                                key={item.category}
+                                key={item.normalizedCategory}
                                 className="rounded-xl border border-gray-100 bg-gray-50 p-4"
                             >
                                 <h3 className="font-bold text-gray-800">
@@ -135,7 +142,7 @@ function BudgetRecommendations({
                                 <div className="mt-4 space-y-2 text-sm">
                                     <div className="flex justify-between gap-3">
                                         <span className="text-gray-500">
-                                            Average monthly spending
+                                            3-Month Monthly Average
                                         </span>
 
                                         <span className="font-medium text-gray-800">
@@ -145,7 +152,7 @@ function BudgetRecommendations({
 
                                     <div className="flex justify-between gap-3">
                                         <span className="text-gray-500">
-                                            Suggested budget
+                                            Suggested budget (with buffer)
                                         </span>
 
                                         <span className="font-bold text-blue-700">
@@ -199,7 +206,7 @@ function BudgetRecommendations({
             )}
 
             <p className="mt-5 text-xs text-gray-400">
-                Recommendations are estimates based on recorded expenses.
+                Recommendations are estimates based on recorded expenses over 3 calendar months (including months without expenses).
                 They are suggestions, not financial advice.
             </p>
         </section>

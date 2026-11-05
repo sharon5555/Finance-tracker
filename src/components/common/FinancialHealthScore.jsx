@@ -1,4 +1,3 @@
-
 import React from "react";
 
 function FinancialHealthScore({
@@ -65,12 +64,16 @@ function FinancialHealthScore({
     let monthlyExpenses = 0;
     let budgetedExpenses = 0;
 
-    // Keep only valid budgets.
-    const validBudgets = budgets.filter(
-        (budget) =>
+    // Keep only budgets with a valid category and positive finite amount.
+    const validBudgets = budgets.filter((budget) => {
+        const amount = Number(budget.amount);
+
+        return (
             budget.category &&
-            Number(budget.amount) > 0
-    );
+            Number.isFinite(amount) &&
+            amount > 0
+        );
+    });
 
     // Collect all budget categories.
     const budgetCategories = new Set(
@@ -95,7 +98,13 @@ function FinancialHealthScore({
         // Ignore transactions outside the current month.
         if (transactionMonth !== currentMonth) return;
 
-        const amount = Number(transaction.amount) || 0;
+        // Convert the transaction amount into a number.
+        const amount = Number(transaction.amount);
+
+        // Ignore transactions with invalid or negative amounts.
+        if (!Number.isFinite(amount) || amount < 0) {
+            return;
+        }
 
         // Normalise transaction type.
         const transactionType = String(

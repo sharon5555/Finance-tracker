@@ -1,4 +1,3 @@
-
 import React from "react";
 import {
     Chart as ChartJS,
@@ -50,28 +49,30 @@ function MonthlyBudgetPerformance({
             budget: budgets.reduce(
                 (total, item) => total + (Number(item.amount) || 0),
                 0
-            ),
-            hasExpenses: false
+            )
         };
     });
 
-    // Only compare spending in categories that have a budget.
+    // Normalise budgeted categories (trimmed and lowercase) to prevent case-mismatch issues.
     const budgetCategories = new Set(
-        budgets.map((budget) => budget.category)
+        budgets
+            .filter((budget) => budget.category)
+            .map((budget) => String(budget.category).trim().toLowerCase())
     );
 
-    // Add each eligible expense to its matching month.
+    // Add each eligible expense to its matching month after normalising category names.
     transactions.forEach((transaction) => {
-        if (
-            transaction.type !== "Expense" ||
-            !transaction.date
-        ) {
+        if (!transaction.date || !transaction.type) return;
+
+        const type = String(transaction.type).trim().toLowerCase();
+        if (type !== "expense") {
             return;
         }
 
-        const category = transaction.category || "Other";
+        const rawCategory = transaction.category || "Other";
+        const normalizedCategory = String(rawCategory).trim().toLowerCase();
 
-        if (!budgetCategories.has(category)) {
+        if (!budgetCategories.has(normalizedCategory)) {
             return;
         }
 
@@ -84,20 +85,18 @@ function MonthlyBudgetPerformance({
         if (!monthData) return;
 
         monthData.spent += Number(transaction.amount) || 0;
-        monthData.hasExpenses = true;
     });
 
-    // Identify months with recorded spending in budgeted categories.
-    const activeMonths = monthlyData.filter(
-        (month) => month.hasExpenses
-    );
+    // All 6 months are considered active in the performance comparison so that
+    // months with zero spending against a budget are correctly accounted for.
+    const activeMonths = monthlyData;
 
-    // Count active months where spending stayed within the budget.
+    // Count months where spending stayed within or equal to the budget.
     const monthsWithinBudget = activeMonths.filter(
         (month) => month.spent <= month.budget
     ).length;
 
-    // Calculate total and average spending.
+    // Calculate total and average spending across all 6 months.
     const totalSpent = monthlyData.reduce(
         (total, month) => total + month.spent,
         0
@@ -178,7 +177,7 @@ function MonthlyBudgetPerformance({
                 </h2>
 
                 <p className="text-sm text-gray-500 mt-1">
-                    Compare your spending with your budget allowance
+                    Compare your spending in budgeted categories with your budget allowance
                     over the last six months.
                 </p>
             </div>
@@ -188,7 +187,7 @@ function MonthlyBudgetPerformance({
 
                 <div className="rounded-xl bg-blue-50 p-4">
                     <p className="text-sm text-gray-600">
-                        Total Spending
+                        Spending in Budgeted Categories
                     </p>
 
                     <h3 className="text-xl font-bold text-gray-800 mt-2">
@@ -206,7 +205,7 @@ function MonthlyBudgetPerformance({
                     </h3>
 
                     <p className="text-xs text-gray-500 mt-1">
-                        Months with recorded spending.
+                        Over the last 6 months.
                     </p>
                 </div>
 
@@ -220,7 +219,7 @@ function MonthlyBudgetPerformance({
                     </h3>
 
                     <p className="text-xs text-gray-500 mt-1">
-                        Based on months with recorded spending.
+                        Based on the 6-month period.
                     </p>
                 </div>
 

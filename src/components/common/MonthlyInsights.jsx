@@ -1,4 +1,3 @@
-
 import React from "react";
 
 // Format amounts as Nigerian Naira.
@@ -7,17 +6,20 @@ function formatCurrency(amount) {
 }
 
 function MonthlyInsights({ transactions = [] }) {
-    // Get the current month and year.
+    // Get the current month, year, and day-of-month for month-to-date comparison.
     const today = new Date();
+    const currentYear = today.getFullYear();
+    const currentMonthIndex = today.getMonth();
+    const currentDay = today.getDate();
 
-    const currentMonth = `${today.getFullYear()}-${String(
-        today.getMonth() + 1
+    const currentMonth = `${currentYear}-${String(
+        currentMonthIndex + 1
     ).padStart(2, "0")}`;
 
     // Get the previous month.
     const previousDate = new Date(
-        today.getFullYear(),
-        today.getMonth() - 1,
+        currentYear,
+        currentMonthIndex - 1,
         1
     );
 
@@ -28,8 +30,8 @@ function MonthlyInsights({ transactions = [] }) {
     // Prepare the last six months.
     const monthlyData = Array.from({ length: 6 }, (_, index) => {
         const date = new Date(
-            today.getFullYear(),
-            today.getMonth() - (5 - index),
+            currentYear,
+            currentMonthIndex - (5 - index),
             1
         );
 
@@ -47,26 +49,40 @@ function MonthlyInsights({ transactions = [] }) {
         };
     });
 
-    // Add each transaction to its correct month.
+    // Store previous month-to-date expenses for equivalent period comparison
+    let previousMonthEquivalentExpenses = 0;
+
+    // Add each transaction to its correct month and calculate equivalent period spending
     transactions.forEach((transaction) => {
         if (!transaction.date) return;
 
-        const transactionMonth = String(transaction.date).slice(0, 7);
+        const transactionDateStr = String(transaction.date);
+        const transactionMonth = transactionDateStr.slice(0, 7);
+        const amount = Number(transaction.amount) || 0;
+        
+        // Normalise transaction type to handle variations safely
+        const type = transaction.type ? String(transaction.type).trim().toLowerCase() : "";
 
         const monthData = monthlyData.find(
             (month) => month.key === transactionMonth
         );
 
-        if (!monthData) return;
+        if (monthData) {
+            if (type === "income") {
+                monthData.income += amount;
+            }
 
-        const amount = Number(transaction.amount) || 0;
-
-        if (transaction.type === "Income") {
-            monthData.income += amount;
+            if (type === "expense") {
+                monthData.expenses += amount;
+            }
         }
 
-        if (transaction.type === "Expense") {
-            monthData.expenses += amount;
+        // Calculate previous month's expenses up to the equivalent day-of-month
+        if (type === "expense" && transactionMonth === previousMonth) {
+            const dayOfTransaction = parseInt(transactionDateStr.slice(8, 10), 10);
+            if (!isNaN(dayOfTransaction) && dayOfTransaction <= currentDay) {
+                previousMonthEquivalentExpenses += amount;
+            }
         }
     });
 
@@ -75,13 +91,8 @@ function MonthlyInsights({ transactions = [] }) {
         (month) => month.key === currentMonth
     );
 
-    const previousMonthData = monthlyData.find(
-        (month) => month.key === previousMonth
-    );
-
     const currentExpenses = currentMonthData?.expenses || 0;
     const currentIncome = currentMonthData?.income || 0;
-    const previousExpenses = previousMonthData?.expenses || 0;
 
     // Find the month with the highest expenses.
     const highestExpenseMonth = monthlyData.reduce(
@@ -90,13 +101,13 @@ function MonthlyInsights({ transactions = [] }) {
         monthlyData[0]
     );
 
-    // Calculate the percentage change in spending.
+    // Calculate the percentage change using equivalent month-to-date periods.
     let spendingChange = "No expenses recorded";
     let spendingColor = "text-gray-500";
 
-    if (previousExpenses > 0) {
+    if (previousMonthEquivalentExpenses > 0) {
         const percentageChange =
-            ((currentExpenses - previousExpenses) / previousExpenses) * 100;
+            ((currentExpenses - previousMonthEquivalentExpenses) / previousMonthEquivalentExpenses) * 100;
 
         if (percentageChange > 0) {
             spendingChange = `${percentageChange.toFixed(1)}% increase`;
@@ -128,7 +139,7 @@ function MonthlyInsights({ transactions = [] }) {
                 </h2>
 
                 <p className="text-sm text-gray-500 mt-1">
-                    Understand how your money is moving.
+                    Understand how your money is moving (Month-to-Date comparison).
                 </p>
             </div>
 
@@ -159,7 +170,7 @@ function MonthlyInsights({ transactions = [] }) {
                 {/* Current month expenses */}
                 <div className="rounded-xl bg-orange-50 p-4">
                     <p className="text-sm text-gray-600">
-                        This Month's Expenses
+                        This Month's Expenses (MTD)
                     </p>
 
                     <h3 className="text-xl font-bold text-gray-800 mt-2">
@@ -167,7 +178,7 @@ function MonthlyInsights({ transactions = [] }) {
                     </h3>
 
                     <p className="text-xs text-gray-500 mt-2">
-                        Total money spent this month.
+                        Total money spent month-to-date.
                     </p>
                 </div>
 
@@ -197,7 +208,7 @@ function MonthlyInsights({ transactions = [] }) {
                     </h3>
 
                     <p className="text-xs text-gray-500 mt-2">
-                        Compared with the previous month.
+                        Current month-to-date vs. previous month over equivalent days.
                     </p>
                 </div>
 

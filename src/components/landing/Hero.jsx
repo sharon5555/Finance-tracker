@@ -235,28 +235,37 @@ function Hero() {
     }
 
     /*
-    Add money to a specific financial goal.
+        Add money to a specific financial goal.
 
-    GoalCard sends the amount the user entered.
-    This function finds the correct goal and
-    increases its current amount.
-*/
+        Functional state updates ensure we always use
+        the latest version of the goals array.
+    */
     function addMoneyToGoal(goalId, amount) {
 
-        setGoals(
-            goals.map((goal) => {
+        // Convert the amount into a number.
+        const numericAmount = Number(amount);
 
-                // Find the goal that the user is updating.
+        // Reject invalid amounts.
+        if (!Number.isFinite(numericAmount) || numericAmount <= 0) {
+            return;
+        }
+
+        setGoals((previousGoals) =>
+            previousGoals.map((goal) => {
+
+                // Find the goal receiving the money.
                 if (goal.id === goalId) {
 
-                    // Increase the amount saved toward the goal.
+                    // Convert the existing savings into a number.
+                    const currentSaved = Number(goal.currentAmount) || 0;
+
+                    // Add the new amount to the existing savings.
                     return {
                         ...goal,
-                        currentAmount: goal.currentAmount + amount
+                        currentAmount: currentSaved + numericAmount
                     };
                 }
 
-                // Leave all other goals unchanged.
                 return goal;
             })
         );
@@ -314,6 +323,10 @@ function Hero() {
         // Store the selected goal.
         setEditingGoal(goalToEdit);
 
+    }
+
+    function handleEditGoal(goal) {
+        setEditingGoal(goal);
     }
 
         // PART D
@@ -408,23 +421,32 @@ function Hero() {
 
     // Add a new budget or update an existing category's budget.
     function addBudget(newBudget) {
+
         setBudgets((previousBudgets) => {
+
+            // Compare category names without case differences.
             const existingBudget = previousBudgets.find(
-                (budget) => budget.category === newBudget.category
+                (budget) =>
+                    String(budget.category).trim().toLowerCase() ===
+                    String(newBudget.category).trim().toLowerCase()
             );
 
+            // Update the existing category budget.
             if (existingBudget) {
+
                 return previousBudgets.map((budget) =>
-                    budget.category === newBudget.category
-                        ? { ...budget, amount: newBudget.amount }
+                    budget.id === existingBudget.id
+                        ? { ...budget, amount: Number(newBudget.amount) }
                         : budget
                 );
             }
 
+            // Otherwise, create a new budget.
             return [
                 ...previousBudgets,
                 {
                     ...newBudget,
+                    amount: Number(newBudget.amount),
                     id: Date.now().toString()
                 }
             ];
@@ -478,33 +500,42 @@ function Hero() {
         of the user's goals.
     */
 
-    /*
-        Calculate financial goal statistics.
-
-        These values will be used to create
-        a quick summary of the user's goals.
-    */
-
     // Count how many goals the user has.
     const totalGoals = goals.length;
 
 
-    // Add together the amount saved across all goals.
+    // Add together the amount saved across all goals safely.
     const totalGoalSaved = goals.reduce(
-        (total, goal) => total + Number(goal.currentAmount),
+        (total, goal) => {
+            const saved = Number(goal.currentAmount);
+
+            return total + (
+                Number.isFinite(saved) && saved > 0
+                    ? saved
+                    : 0
+            );
+        },
         0
     );
 
 
     // Count goals that have been completed.
     const completedGoals = goals.filter(
-        (goal) => goal.currentAmount >= goal.targetAmount
+        (goal) => Number(goal.currentAmount) >= Number(goal.targetAmount)
     ).length;
 
 
-    // Add together all goal target amounts.
+    // Add together all goal target amounts safely.
     const totalGoalTarget = goals.reduce(
-        (total, goal) => total + Number(goal.targetAmount),
+        (total, goal) => {
+            const target = Number(goal.targetAmount);
+
+            return total + (
+                Number.isFinite(target) && target > 0
+                    ? target
+                    : 0
+            );
+        },
         0
     );
 
@@ -992,28 +1023,16 @@ function Hero() {
 
                                     <GoalCard
                                         key={goal.id}
-
                                         name={goal.name}
-
                                         targetAmount={goal.targetAmount}
-
                                         currentAmount={goal.currentAmount}
-
                                         targetDate={goal.targetDate}
-
                                         priority={goal.priority}
-
-                                        onAddMoney={(amount) => 
+                                        onAddMoney={(amount) =>
                                             addMoneyToGoal(goal.id, amount)
                                         }
-
-                                        onEdit={() =>
-                                            editGoal(goal.id)
-                                        }
-
-                                        onDelete={() =>
-                                            deleteGoal(goal.id)
-                                        }
+                                        onEdit={() => handleEditGoal(goal)}
+                                        onDelete={() => deleteGoal(goal.id)}
                                     />
                                 ))
 
@@ -1245,7 +1264,7 @@ function Hero() {
                                 Trasaction Area.
                             */}
                             <TransactionHistory
-                                transactions={sortedTransactions}
+                                transactions={transactions}
                                 onEdit={editTransaction}
                                 onDelete={deleteTransaction}
                             />

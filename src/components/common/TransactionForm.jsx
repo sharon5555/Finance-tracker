@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 
 
-//Recieve the function for adding transactions 
+//Receive the function for adding transactions 
 //and the transactions that may currently be edited.
 function TransactionForm({ 
     onAddTransaction,
@@ -66,27 +66,38 @@ function TransactionForm({
         // Prevent the browser from refreshing the page.
         event.preventDefault();
 
+        // Trim input values consistently
+        const trimmedTitle = title.trim();
+        const trimmedAmount = amount.trim();
+        const trimmedDate = date.trim();
+
         // Check if the user entered a title.
-        if(title.trim() === "") {
+        if (trimmedTitle === "") {
             alert("Please enter a transaction title.");
             return;
         }
 
-        // Check if the user entered a valid amount.
-        if (amount === "" || Number(amount) <= 0) {
-            alert("Please enter a valid amount.");
+        // Convert the entered amount into a number and validate it.
+        const numericAmount = Number(trimmedAmount);
+
+        // Make sure the amount is a valid, finite, positive number.
+        if (
+            trimmedAmount === "" ||
+            !Number.isFinite(numericAmount) ||
+            numericAmount <= 0
+        ) {
+            alert("Please enter a valid positive amount.");
             return;
         }
 
         // Check if the user selected a date.
-        // A transaction should have a date so we can track it later.
-        if(date === "") {
+        if (trimmedDate === "") {
             alert("Please select a transaction date.");
             return;
         }
 
         // create the transaction information.
-        const transactionDate = {
+        const transactionData = {
 
             // Keep the old ID when editing.
             // Create a new ID when adding a transaction.
@@ -94,16 +105,16 @@ function TransactionForm({
                 ? editingTransaction.id
                 : Date.now(),
 
-            title: title,
-            amount: Number(amount),
+            title: trimmedTitle,
+            amount: numericAmount,
             type: type,
             category: category,
-            date: date,
+            date: trimmedDate,
         }
 
         // Send the new transaction to Hero.jsx.
         // Hero.jsx will decide whether to add or update it.
-        onAddTransaction(transactionDate);
+        onAddTransaction(transactionData);
 
         // if we were editing, exit edit mode.
         if (editingTransaction) {
@@ -120,7 +131,7 @@ function TransactionForm({
 
 
     /*
-        Change  the heading depending on whether 
+        Change the heading depending on whether 
         the user is adding or editing a transaction.
     */
     return(
@@ -169,6 +180,9 @@ function TransactionForm({
                         value={amount}
                         onChange={(event) => setAmount(event.target.value)}
                         className="w-full border rounded-lg px-4 py-2"
+                        min="0.01"
+                        step="0.01"
+                        required
                     />
                 </div>
 
@@ -255,7 +269,7 @@ function TransactionForm({
 
                             className="flex-1 bg-slate-200 text-slate-700 py-3 rounded-lg
                             font-semibold border border-slate-200 hover:bg-slate-200
-                            transition-al duration-200"
+                            transition-all duration-200"
                         >
                             Cancel
                         </button>

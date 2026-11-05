@@ -22,16 +22,16 @@ function GoalCard({
     const [amountToAdd, setAmountToAdd] = useState("");
 
 
-
-
     /*
-        Calculate the percentage of the goal
-        that has already been completed.
+        Convert the amounts into numbers safely and
+        protect the progress calculation against division by zero.
     */
-    const progress = Math.min(
-        (currentAmount / targetAmount) * 100,
-        100
-    );
+    const target = Number(targetAmount) || 0;
+    const saved = Number(currentAmount) || 0;
+
+    const progress = target > 0
+        ? Math.min((saved / target) * 100, 100)
+        : 0;
 
 
     /*
@@ -67,27 +67,26 @@ function GoalCard({
 
     /*
         calculate how many days are left before the 
-        financial goal deadline.
+        financial goal deadline using local date parsing
+        to avoid UTC timezone issues.
     */
     let daysRemaining = null;
 
     if (targetDate) {
+        // Convert YYYY-MM-DD into a local date.
+        const [year, month, day] = targetDate.split("-").map(Number);
+        const deadline = new Date(year, month - 1, day);
 
-        // convert the target date into a JavaScript Date.
-        const deadline = new Date(targetDate);
-
-        //Get today'sdate.
+        // Get today's date.
         const today = new Date();
 
-        //Remove the time portion so we compare dates only.
+        // Remove the time portion so we compare dates only.
         today.setHours(0, 0, 0, 0);
         deadline.setHours(0, 0, 0, 0);
 
-        //calculate the difference in milliseconds.
+        // Calculate the difference in milliseconds and convert into days.
         const difference = deadline - today;
-
-        // convert milliseconds into days.
-        daysRemaining = Math.ceil(
+        daysRemaining = Math.round(
             difference / (1000 * 60 * 60 * 24)
         );
     }
@@ -108,7 +107,6 @@ function GoalCard({
     } else if (daysRemaining === null) {
 
         // No deadline was provided.
-        // The text above already tells the user this.
         deadlineMessage = "Set a deadline to track your progress";
         deadlineStyle = "text-slate-400";
 
@@ -150,7 +148,7 @@ function GoalCard({
         to reach the target.
     */
     const remainingAmount = Math.max(
-        targetAmount - currentAmount,
+        target - saved,
         0
     );
 
@@ -168,11 +166,13 @@ function GoalCard({
         const amount = Number(amountToAdd);
 
 
-        // Check that the amount is valid.
-        if (amount <= 0) {
-
+        // Check that the amount is a valid positive number using robust validation.
+        if (
+            amountToAdd.trim() === "" ||
+            !Number.isFinite(amount) ||
+            amount <= 0
+        ) {
             alert("Please enter a valid amount.");
-
             return;
         }
 
@@ -245,8 +245,7 @@ function GoalCard({
 
                 If there is no target date,
                 we show "No deadline set". 
-            */}
-            <div className="mt-2">
+            */<div className="mt-2">
 
                 {targetDate ? (
 
@@ -282,7 +281,7 @@ function GoalCard({
                         {deadlineMessage}
                     </p>
 
-            </div>
+            </div>}
             
 
 
@@ -290,11 +289,11 @@ function GoalCard({
             <div className="flex justify-between text-sm mb-2">
 
                 <span className="text-slate-500">
-                    ₦{currentAmount.toLocaleString()}
+                    ₦{saved.toLocaleString()}
                 </span>
 
                 <span className="text-slate-500">
-                    Target: ₦{targetAmount.toLocaleString()}
+                    Target: ₦{target.toLocaleString()}
                 </span>
 
             </div>
@@ -319,7 +318,7 @@ function GoalCard({
             </div>
 
             {/*
-                Display the exact percentage eompleted.
+                Display the exact percentage completed.
             */}
             <div className="flex justify-between items-center mt-2">
 
@@ -387,6 +386,8 @@ function GoalCard({
                     <input
                         type="number"
                         placeholder="Amount"
+                        min="0.01"
+                        step="0.01"
                         value={amountToAdd}
                         onChange={(event) =>
                             setAmountToAdd(event.target.value)

@@ -1,4 +1,4 @@
-import {  useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 
 
 /*
@@ -90,42 +90,37 @@ function GoalForm({
         }
 
 
-        // Make sure the target amount is valid.
+        // Convert the target amount to a number.
+        const target = Number(targetAmount);
+
+        // Make sure the target amount is a valid positive number.
         if (
-            targetAmount === "" ||
-            Number(targetAmount) <= 0
+            targetAmount.trim() === "" ||
+            !Number.isFinite(target) ||
+            target <= 0
         ) {
-
             alert("Please enter a valid target amount.");
-
             return;
         }
 
 
         // Convert the starting amount to a number.
-        const startingAmount =
-            currentAmount === ""
-                ? 0
-                : Number(currentAmount);
+        const startingAmount = currentAmount.trim() === ""
+            ? 0
+            : Number(currentAmount);
 
-
-        // Make sure the starting amount is not negative.
-        if (startingAmount < 0) {
-
-            alert("Starting amount cannot be negative.");
-
+        // Make sure the starting amount is a valid number.
+        if (
+            !Number.isFinite(startingAmount) ||
+            startingAmount < 0
+        ) {
+            alert("Please enter a valid starting amount.");
             return;
         }
 
-
-        // Make sure the starting amount
-        // does not exceed the target.
-        if (startingAmount > Number(targetAmount)) {
-
-            alert(
-                "Starting amount cannot be greater than the target."
-            );
-
+        // Make sure the starting amount does not exceed the target.
+        if (startingAmount > target) {
+            alert("Starting amount cannot be greater than the target.");
             return;
         }
 
@@ -142,11 +137,11 @@ function GoalForm({
                 ? editingGoal.id
                 : Date.now(),
 
-                // Goal name.
+            // Goal name.
             name: name.trim(),
 
             // Amount the user wants to reach.
-            targetAmount: Number(targetAmount),
+            targetAmount: target,
 
             // Amount already saved.
             currentAmount: startingAmount,
@@ -163,8 +158,8 @@ function GoalForm({
         // Send the goal to Hero.jsx.
         onAddGoal(newGoal);
 
-        // If we were editing a goal, leave edit mode after saving.
-        if (editingGoal) {
+        // If we were editing a goal, leave edit mode after saving (with optional safeguard).
+        if (editingGoal && typeof onFinishEditing === "function") {
             onFinishEditing();
         }
 
@@ -223,6 +218,7 @@ function GoalForm({
                             setName(event.target.value)
                         }
                         className="w-full border rounded-lg px-4 py-2"
+                        required
                     />
 
                 </div>
@@ -230,7 +226,6 @@ function GoalForm({
 
                 {/* 
                     Target amount. 
-                    
                 */}
                 <div className="mb-4">
 
@@ -246,6 +241,9 @@ function GoalForm({
                             setTargetAmount(event.target.value)
                         }
                         className="w-full border rounded-lg px-4 py-2"
+                        min="0.01"
+                        step="0.01"
+                        required
                     />
 
                 </div>
@@ -266,6 +264,8 @@ function GoalForm({
                             setCurrentAmount(event.target.value)
                         }
                         className="w-full border rounded-lg px-4 py-2"
+                        min="0"
+                        step="0.01"
                     />
 
                 </div>

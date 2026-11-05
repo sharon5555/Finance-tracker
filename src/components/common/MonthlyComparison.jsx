@@ -74,12 +74,15 @@ function MonthlyComparison({ transactions = [] }) {
         if (!monthData) return;
 
         const amount = Number(transaction.amount) || 0;
+        
+        // Normalise transaction type to handle variations safely
+        const type = transaction.type ? String(transaction.type).trim().toLowerCase() : "";
 
-        if (transaction.type === "Income") {
+        if (type === "income") {
             monthData.income += amount;
         }
 
-        if (transaction.type === "Expense") {
+        if (type === "expense") {
             monthData.expenses += amount;
         }
     });
@@ -150,8 +153,15 @@ function MonthlyComparison({ transactions = [] }) {
                 beginAtZero: true,
 
                 ticks: {
-                    callback: (value) =>
-                        `₦${Number(value).toLocaleString("en-NG")}`
+                    callback: (value) => {
+                        if (value >= 1_000_000) {
+                            return `₦${(value / 1_000_000).toFixed(1)}m`;
+                        }
+                        if (value >= 1_000) {
+                            return `₦${(value / 1_000).toFixed(0)}k`;
+                        }
+                        return `₦${value}`;
+                    }
                 }
             }
         }

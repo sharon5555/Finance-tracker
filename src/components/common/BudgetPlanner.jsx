@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 
 function BudgetPlanner({
@@ -17,22 +16,25 @@ function BudgetPlanner({
         today.getMonth() + 1
     ).padStart(2, "0")}`;
 
-    // Calculate spending for each budget category.
+    // Calculate spending for each budget category with normalised keys.
     const spendingByCategory = {};
 
     transactions.forEach((transaction) => {
+        if (!transaction.date || !transaction.type) return;
+
+        const type = String(transaction.type).trim().toLowerCase();
         if (
-            transaction.type !== "Expense" ||
-            !transaction.date ||
+            type !== "expense" ||
             String(transaction.date).slice(0, 7) !== currentMonth
         ) {
             return;
         }
 
-        const transactionCategory = transaction.category || "Other";
+        const rawCategory = transaction.category || "Other";
+        const normalizedCategory = String(rawCategory).trim().toLowerCase();
 
-        spendingByCategory[transactionCategory] =
-            (spendingByCategory[transactionCategory] || 0) +
+        spendingByCategory[normalizedCategory] =
+            (spendingByCategory[normalizedCategory] || 0) +
             (Number(transaction.amount) || 0);
     });
 
@@ -46,7 +48,13 @@ function BudgetPlanner({
 
         const budgetAmount = Number(amount);
 
-        if (!budgetAmount || budgetAmount <= 0) {
+        // Robust amount validation checking for finite numbers and empty strings
+        if (
+            amount.trim() === "" ||
+            !Number.isFinite(budgetAmount) ||
+            budgetAmount <= 0
+        ) {
+            alert("Please enter a valid budget amount.");
             return;
         }
 
@@ -92,7 +100,7 @@ function BudgetPlanner({
 
                 <input
                     type="number"
-                    min="1"
+                    min="0.01"
                     step="0.01"
                     placeholder="Budget amount (₦)"
                     value={amount}
@@ -123,14 +131,20 @@ function BudgetPlanner({
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {budgets.map((budget) => {
+                        // Normalise budget category for robust matching against transactions
+                        const normalizedBudgetCategory = budget.category
+                            ? String(budget.category).trim().toLowerCase()
+                            : "";
+
                         const spent =
-                            spendingByCategory[budget.category] || 0;
+                            spendingByCategory[normalizedBudgetCategory] || 0;
 
                         const limit = Number(budget.amount) || 0;
 
                         const percentage =
                             limit > 0 ? (spent / limit) * 100 : 0;
 
+                        // Limit progress bar width to 100% while keeping actual percentage visible
                         const progressWidth = Math.min(percentage, 100);
 
                         const isOverBudget = spent > limit;

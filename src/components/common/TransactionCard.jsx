@@ -13,25 +13,24 @@ function TransactionCard({
     amount, 
     type, 
     category, 
-    date ,
+    date,
     onEdit,
     onDelete
 }) {
 
     // Check whether this transaction is an income.
-    // This value will help us choose the correct icon and colors.
     const isIncome = type === "Income";
-
 
     // Income uses a downward-left arrow because money is coming into
     // the user's account. Expenses use an upward-right arrow because
     // money is leaving the user's account.
     const Icon = isIncome ? FiArrowDownLeft : FiArrowUpRight;
 
-
-    // Convert the amount into a number so that toLocaleString()
-    // always formats it correctly.
-    const formattedAmount = Number(amount).toLocaleString();
+    // Safely parse and format the amount to prevent errors with invalid values.
+    const numericAmount = Number(amount);
+    const formattedAmount = Number.isFinite(numericAmount)
+        ? numericAmount.toLocaleString()
+        : "0";
 
 
     return (
@@ -112,13 +111,10 @@ function TransactionCard({
 
                         {/* Edit transaction button */}
                         <button
-                            // Call the edit function when the user clicks this button.
+                            type="button"
                             onClick={onEdit}
-
-                            // Show a small message when the mouse is over the button.
                             title="Edit transaction"
-
-                            // Give the edit button a blue hover effect.
+                            aria-label="Edit transaction"
                             className="text-slate-400 hover:text-blue-600"
                         >
                             <FiEdit3 size={17} />
@@ -127,13 +123,10 @@ function TransactionCard({
 
                         {/* Delete transaction button */}
                         <button
-                            // Call the delete function when the user clicks this button.
+                            type="button"
                             onClick={onDelete}
-
-                            // Show a small message when the mouse is over the button.
                             title="Delete transaction"
-
-                            // Give the delete button a red hover effect.
+                            aria-label="Delete transaction"
                             className="text-slate-400 hover:text-red-600"
                         >
                             <FiTrash2 size={17} />

@@ -1,4 +1,3 @@
-
 import React from "react";
 
 function GoalsPerformanceDashboard({ goals = [] }) {
@@ -20,15 +19,28 @@ function GoalsPerformanceDashboard({ goals = [] }) {
             0
         ) || 0;
 
-    // Calculate the overall savings statistics.
+    // Categorise goals reliably to prevent counting invalid goals as active.
+    const validGoals = goals.filter((goal) => getTargetAmount(goal) > 0);
+
+    const completedGoals = validGoals.filter(
+        (goal) => getSavedAmount(goal) >= getTargetAmount(goal)
+    ).length;
+
+    const activeGoals = validGoals.filter(
+        (goal) => getSavedAmount(goal) < getTargetAmount(goal)
+    ).length;
+
+    const incompleteOrInvalidGoals = goals.length - validGoals.length;
+
+    // Calculate the overall savings statistics based on valid goals.
     const totalGoals = goals.length;
 
-    const totalTarget = goals.reduce(
+    const totalTarget = validGoals.reduce(
         (total, goal) => total + getTargetAmount(goal),
         0
     );
 
-    const totalSaved = goals.reduce(
+    const totalSaved = validGoals.reduce(
         (total, goal) => total + getSavedAmount(goal),
         0
     );
@@ -37,16 +49,6 @@ function GoalsPerformanceDashboard({ goals = [] }) {
     const overallProgress = totalTarget > 0
         ? Math.min((totalSaved / totalTarget) * 100, 100)
         : 0;
-
-    // Count completed goals.
-    const completedGoals = goals.filter(
-        (goal) =>
-            getTargetAmount(goal) > 0 &&
-            getSavedAmount(goal) >= getTargetAmount(goal)
-    ).length;
-
-    // Count goals that are not yet completed.
-    const activeGoals = totalGoals - completedGoals;
 
     // Calculate the remaining amount needed.
     const remainingAmount = Math.max(
@@ -158,8 +160,8 @@ function GoalsPerformanceDashboard({ goals = [] }) {
                         </p>
                     </div>
 
-                    {/* Completed and active goals summary */}
-                    <div className="grid grid-cols-2 gap-4 mt-6">
+                    {/* Completed, active, and incomplete goals summary */}
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-6">
 
                         <div className="rounded-xl border border-green-100 p-4">
                             <p className="text-sm text-gray-500">
@@ -180,6 +182,16 @@ function GoalsPerformanceDashboard({ goals = [] }) {
                                 {activeGoals}
                             </h3>
                         </div>
+
+                        <div className="rounded-xl border border-yellow-100 p-4">
+                            <p className="text-sm text-gray-500">
+                                Incomplete / Invalid Target
+                            </p>
+
+                            <h3 className="text-2xl font-bold text-yellow-600 mt-2">
+                                {incompleteOrInvalidGoals}
+                            </h3>
+                        </div>
                     </div>
 
                     {/* Individual savings goal performance */}
@@ -195,19 +207,27 @@ function GoalsPerformanceDashboard({ goals = [] }) {
                                 // Get the current goal's amounts.
                                 const targetAmount = getTargetAmount(goal);
                                 const savedAmount = getSavedAmount(goal);
+                                const hasValidTarget = targetAmount > 0;
 
                                 // Calculate this goal's progress.
-                                const progress = targetAmount > 0
+                                const progress = hasValidTarget
                                     ? Math.min(
                                         (savedAmount / targetAmount) * 100,
                                         100
                                     )
                                     : 0;
 
-                                // Determine whether the goal is completed.
-                                const isCompleted =
-                                    targetAmount > 0 &&
-                                    savedAmount >= targetAmount;
+                                // Determine goal status tag.
+                                let statusLabel = "In Progress";
+                                let statusColor = "bg-blue-100 text-blue-700";
+
+                                if (!hasValidTarget) {
+                                    statusLabel = "Invalid Target";
+                                    statusColor = "bg-yellow-100 text-yellow-700";
+                                } else if (savedAmount >= targetAmount) {
+                                    statusLabel = "Completed";
+                                    statusColor = "bg-green-100 text-green-700";
+                                }
 
                                 return (
                                     <div
@@ -222,12 +242,8 @@ function GoalsPerformanceDashboard({ goals = [] }) {
                                                 {goal.title || goal.name || "Savings Goal"}
                                             </h4>
 
-                                            <span className={`text-xs font-semibold px-3 py-1 rounded-full ${
-                                                isCompleted
-                                                    ? "bg-green-100 text-green-700"
-                                                    : "bg-blue-100 text-blue-700"
-                                            }`}>
-                                                {isCompleted ? "Completed" : "In Progress"}
+                                            <span className={`text-xs font-semibold px-3 py-1 rounded-full ${statusColor}`}>
+                                                {statusLabel}
                                             </span>
                                         </div>
 
@@ -245,9 +261,11 @@ function GoalsPerformanceDashboard({ goals = [] }) {
                                         <div className="h-3 w-full rounded-full bg-gray-100 overflow-hidden">
                                             <div
                                                 className={`h-full rounded-full transition-all duration-500 ${
-                                                    isCompleted
-                                                        ? "bg-green-500"
-                                                        : "bg-purple-500"
+                                                    !hasValidTarget
+                                                        ? "bg-yellow-400"
+                                                        : savedAmount >= targetAmount
+                                                            ? "bg-green-500"
+                                                            : "bg-purple-500"
                                                 }`}
                                                 style={{
                                                     width: `${progress}%`
