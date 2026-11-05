@@ -34,6 +34,7 @@ import SpendingAlerts from "../common/SpendingAlerts";
 import BudgetPlanner from "../common/BudgetPlanner";
 import BudgetRecommendations from "../common/BudgetRecommendations";
 import MonthlyBudgetPerformance from "../common/MonthlyBudgetPerformance";
+import FinancialHealthScore from "./common/FinancialHealthScore";
 
 // Import chart component.
 import FinanceChart from "../charts/FinanceChart";
@@ -777,6 +778,11 @@ function Hero() {
                         />
 
                         <MonthlyBudgetPerformance
+                            transactions={transactions}
+                            budgets={budgets}
+                        />
+
+                        <FinancialHealthScore
                             transactions={transactions}
                             budgets={budgets}
                         />
