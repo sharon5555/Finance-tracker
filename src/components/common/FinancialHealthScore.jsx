@@ -12,51 +12,110 @@ function FinancialHealthScore({
         today.getMonth() + 1
     ).padStart(2, "0")}`;
 
-    // Calculate the user's current-month income and expenses.
+    // Convert different date formats into YYYY-MM.
+    const getTransactionMonth = (date) => {
+        if (!date) return "";
+
+        // Handle JavaScript Date objects.
+        if (date instanceof Date && !isNaN(date)) {
+            return `${date.getFullYear()}-${String(
+                date.getMonth() + 1
+            ).padStart(2, "0")}`;
+        }
+
+        const dateString = String(date).trim();
+
+        // Handle YYYY-MM-DD and ISO date formats.
+        const standardDate = dateString.match(
+            /^(\d{4})-(\d{1,2})/
+        );
+
+        if (standardDate) {
+            return `${standardDate[1]}-${String(
+                standardDate[2]
+            ).padStart(2, "0")}`;
+        }
+
+        // Handle DD/MM/YYYY or MM/DD/YYYY-style dates
+        // using the day/month/year format.
+        const alternateDate = dateString.match(
+            /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/
+        );
+
+        if (alternateDate) {
+            return `${alternateDate[3]}-${String(
+                alternateDate[2]
+            ).padStart(2, "0")}`;
+        }
+
+        // Handle other date formats supported by JavaScript.
+        const parsedDate = new Date(dateString);
+
+        if (!isNaN(parsedDate)) {
+            return `${parsedDate.getFullYear()}-${String(
+                parsedDate.getMonth() + 1
+            ).padStart(2, "0")}`;
+        }
+
+        return "";
+    };
+
+    // Calculate current-month income and expenses.
     let monthlyIncome = 0;
     let monthlyExpenses = 0;
     let budgetedExpenses = 0;
 
-    // Keep only budgets with valid category names and positive amounts.
+    // Keep only valid budgets.
     const validBudgets = budgets.filter(
         (budget) =>
             budget.category &&
             Number(budget.amount) > 0
     );
 
-    // Create a list of categories that have budgets.
+    // Collect all budget categories.
     const budgetCategories = new Set(
-        validBudgets.map((budget) => budget.category)
+        validBudgets.map((budget) =>
+            String(budget.category).trim().toLowerCase()
+        )
     );
 
-    // Calculate the total amount allocated to all budgets.
+    // Calculate the total allocated budget.
     const totalBudget = validBudgets.reduce(
-        (total, budget) => total + Number(budget.amount),
+        (total, budget) =>
+            total + (Number(budget.amount) || 0),
         0
     );
 
-    // Go through the user's transactions.
+    // Analyse current-month transactions.
     transactions.forEach((transaction) => {
-        if (!transaction.date) return;
+        const transactionMonth = getTransactionMonth(
+            transaction.date
+        );
 
-        const transactionMonth = String(transaction.date).slice(0, 7);
-
-        // Only analyse transactions from the current month.
+        // Ignore transactions outside the current month.
         if (transactionMonth !== currentMonth) return;
 
         const amount = Number(transaction.amount) || 0;
 
-        if (transaction.type === "Income") {
+        // Normalise transaction type.
+        const transactionType = String(
+            transaction.type || ""
+        ).trim().toLowerCase();
+
+        // Identify income transactions.
+        if (transactionType === "income") {
             monthlyIncome += amount;
         }
 
-        if (transaction.type === "Expense") {
+        // Identify expense transactions.
+        if (transactionType === "expense") {
             monthlyExpenses += amount;
 
-            const category = transaction.category || "Other";
+            const category = String(
+                transaction.category || "Other"
+            ).trim().toLowerCase();
 
-            // Only count expenses belonging to budgeted categories
-            // when calculating budget performance.
+            // Count expenses belonging to budgeted categories.
             if (budgetCategories.has(category)) {
                 budgetedExpenses += amount;
             }
@@ -69,15 +128,16 @@ function FinancialHealthScore({
 
     const canCalculateScore = hasIncome && hasBudget;
 
-    // Calculate savings performance.
+    // Calculate remaining income after expenses.
     const savings = monthlyIncome - monthlyExpenses;
 
+    // Calculate savings rate.
     const savingsRate = hasIncome
         ? (savings / monthlyIncome) * 100
         : 0;
 
     // Award up to 50 points for savings performance.
-    // Saving 20% or more of income earns the full 50 points.
+    // Saving 20% or more earns the full 50 points.
     const savingsScore = Math.min(
         50,
         Math.max(0, (savingsRate / 20) * 50)
@@ -103,7 +163,7 @@ function FinancialHealthScore({
         );
     }
 
-    // Calculate the final score.
+    // Calculate the final financial health score.
     const healthScore = canCalculateScore
         ? Math.round(savingsScore + budgetScore)
         : 0;
@@ -112,23 +172,27 @@ function FinancialHealthScore({
     let rating = "Needs Attention";
     let ratingColor = "text-red-600";
     let ratingBackground = "bg-red-50";
-    let ratingMessage = "Review your spending and savings habits.";
+    let ratingMessage =
+        "Review your spending and savings habits.";
 
     if (healthScore >= 80) {
         rating = "Excellent";
         ratingColor = "text-green-700";
         ratingBackground = "bg-green-50";
-        ratingMessage = "You're maintaining healthy financial habits.";
+        ratingMessage =
+            "You're maintaining healthy financial habits.";
     } else if (healthScore >= 60) {
         rating = "Good";
         ratingColor = "text-blue-700";
         ratingBackground = "bg-blue-50";
-        ratingMessage = "You're making progress. Keep improving your habits.";
+        ratingMessage =
+            "You're making progress. Keep improving your habits.";
     } else if (healthScore >= 40) {
         rating = "Needs Improvement";
         ratingColor = "text-orange-700";
         ratingBackground = "bg-orange-50";
-        ratingMessage = "Look for ways to improve your savings and budget control.";
+        ratingMessage =
+            "Look for ways to improve your savings and budget control.";
     }
 
     // Format amounts as Nigerian Naira.
@@ -151,7 +215,7 @@ function FinancialHealthScore({
             </div>
 
             {!canCalculateScore ? (
-                /* Explain what is needed before a score can be calculated. */
+                /* Explain what is missing before calculating the score. */
                 <div className="rounded-xl bg-blue-50 border border-blue-100 p-5">
                     <h3 className="font-semibold text-gray-800">
                         Your financial score is not ready yet.
@@ -175,7 +239,7 @@ function FinancialHealthScore({
                 </div>
             ) : (
                 <>
-                    {/* Main score display */}
+                    {/* Main financial health score display */}
                     <div className={`rounded-2xl ${ratingBackground} p-6 text-center`}>
                         <p className="text-sm font-medium text-gray-600">
                             Your Financial Health Score
@@ -202,7 +266,7 @@ function FinancialHealthScore({
                         </p>
                     </div>
 
-                    {/* Score breakdown */}
+                    {/* Savings and budget score breakdown */}
                     <div className="mt-6 space-y-5">
 
                         {/* Savings performance */}
@@ -213,7 +277,7 @@ function FinancialHealthScore({
                                 </span>
 
                                 <span className="font-bold text-gray-800">
-                                    {Math.round(savingsScore)} / 50
+                                    {savingsScore.toFixed(1)} / 50
                                 </span>
                             </div>
 
@@ -240,7 +304,7 @@ function FinancialHealthScore({
                                 </span>
 
                                 <span className="font-bold text-gray-800">
-                                    {Math.round(budgetScore)} / 50
+                                    {budgetScore.toFixed(1)} / 50
                                 </span>
                             </div>
 
@@ -305,7 +369,7 @@ function FinancialHealthScore({
                 </>
             )}
 
-            {/* Explain how the score works. */}
+            {/* Explain how the score is calculated. */}
             <p className="mt-6 text-xs text-gray-400">
                 This is an educational indicator based on your recorded
                 current-month transactions and budgets. It is not a
