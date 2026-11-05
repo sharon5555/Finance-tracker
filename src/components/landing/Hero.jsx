@@ -35,6 +35,8 @@ import BudgetPlanner from "../common/BudgetPlanner";
 import BudgetRecommendations from "../common/BudgetRecommendations";
 import MonthlyBudgetPerformance from "../common/MonthlyBudgetPerformance";
 import FinancialHealthScore from "../common/FinancialHealthScore";
+// Import the financial goals performance dashboard.
+import GoalsPerformanceDashboard from "../common/GoalsPerformanceDashboard";
 
 // Import chart component.
 import FinanceChart from "../charts/FinanceChart";
@@ -914,6 +916,11 @@ function Hero() {
 
                         </div>
 
+                    </div>
+
+                    {/* Display the overall savings goals performance. */}
+                    <div className="mt-8">
+                        <GoalsPerformanceDashboard goals={goals} />
                     </div>
 
 
