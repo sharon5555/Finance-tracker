@@ -33,6 +33,7 @@ import MonthlyInsights from "../common/MonthlyInsights";
 import SpendingAlerts from "../common/SpendingAlerts";
 import BudgetPlanner from "../common/BudgetPlanner";
 import BudgetRecommendations from "../common/BudgetRecommendations";
+import MonthlyBudgetPerformance from "../common/MonthlyBudgetPerformance";
 
 // Import chart component.
 import FinanceChart from "../charts/FinanceChart";
@@ -773,6 +774,11 @@ function Hero() {
                             transactions={transactions}
                             budgets={budgets}
                             onApplyRecommendation={addBudget}
+                        />
+
+                        <MonthlyBudgetPerformance
+                            transactions={transactions}
+                            budgets={budgets}
                         />
                     </div>
 
