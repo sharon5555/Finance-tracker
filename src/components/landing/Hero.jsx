@@ -38,6 +38,9 @@ import FinancialHealthScore from "../common/FinancialHealthScore";
 // Import the financial goals performance dashboard.
 import GoalsPerformanceDashboard from "../common/GoalsPerformanceDashboard";
 
+// Displays intelligent insights about the user's savings goals.
+import SmartSavingsInsights from "../common/SmartSavingsInsights";
+
 // Import chart component.
 import FinanceChart from "../charts/FinanceChart";
 import ExpenseChart from "../charts/ExpenseChart";
@@ -949,9 +952,12 @@ function Hero() {
 
                     </div>
 
-                    {/* Display the overall savings goals performance. */}
+                    {/* Shows the user's overall savings goal performance. */}
                     <div className="mt-8">
                         <GoalsPerformanceDashboard goals={goals} />
+
+                        {/* Provides useful insights and recommendations for savings goals. */}
+                        <SmartSavingsInsights goals={goals} />
                     </div>
 
 
