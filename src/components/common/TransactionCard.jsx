@@ -6,6 +6,9 @@ import {
     FiEdit3
 } from "react-icons/fi";
 
+// Import the reusable date formatter.
+import formatDate from "../../utils/formatDate";
+
 
 // Receive the transaction details and the delete function from Hero.jsx.
 function TransactionCard({ 
@@ -85,9 +88,9 @@ function TransactionCard({
                         </p>
 
 
-                        {/* Transaction date */}
+                        {/* Display the transaction date in a consistent format. */}
                         <p className="text-xs text-slate-400 mt-1">
-                            {date}
+                            {formatDate(date)}
                         </p>
 
                     </div>

@@ -5,6 +5,9 @@ import { jsPDF } from "jspdf";
 // Import XLSX styled package for generating professionally formatted Excel workbooks.
 import * as XLSX from "xlsx-js-style";
 
+// Import the reusable date formatter.
+import formatDate from "../../utils/formatDate";
+
 
 // TransactionHistory displays the user's complete transaction history.
 //
@@ -78,16 +81,8 @@ function TransactionHistory({
             selectedTransaction.id
         ).slice(-8).toUpperCase()}`;
 
-        // Format the transaction date.
-        const formattedDate = selectedTransaction.date
-            ? new Date(
-                selectedTransaction.date + "T00:00:00"
-            ).toLocaleDateString("en-GB", {
-                day: "numeric",
-                month: "long",
-                year: "numeric"
-            })
-            : "No date available";
+        // Format the transaction date for the PDF receipt.
+        const formattedDate = formatDate(selectedTransaction.date);
 
         // Format the transaction amount.
         const amount = Number(
@@ -1455,7 +1450,7 @@ function TransactionHistory({
                                         <p className="text-sm text-slate-500 mt-1">
                                             {transaction.category}
                                             {" • "}
-                                            {transaction.date}
+                                            {formatDate(transaction.date)}
                                         </p>
 
                                     </div>
@@ -1761,15 +1756,7 @@ function TransactionHistory({
                                 </span>
 
                                 <span className="text-sm font-semibold text-gray-800">
-                                    {selectedTransaction.date
-                                        ? new Date(
-                                            selectedTransaction.date + "T00:00:00"
-                                        ).toLocaleDateString("en-GB", {
-                                            day: "numeric",
-                                            month: "long",
-                                            year: "numeric"
-                                        })
-                                        : "No date available"}
+                                    {formatDate(selectedTransaction.date)}
                                 </span>
                             </div>
 
@@ -1897,7 +1884,7 @@ function TransactionHistory({
                                     <div className="flex justify-between gap-4">
                                         <span className="text-gray-500">Date</span>
                                         <span className="font-semibold text-gray-800">
-                                            {selectedTransaction.date}
+                                            {formatDate(selectedTransaction.date)}
                                         </span>
                                     </div>
 
