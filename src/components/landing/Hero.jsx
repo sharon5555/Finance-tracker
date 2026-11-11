@@ -46,6 +46,9 @@ import FinanceChart from "../charts/FinanceChart";
 import ExpenseChart from "../charts/ExpenseChart";
 import MonthlySummary from "../charts/MonthlySummary";
 
+// Import the reusable Nigerian Naira currency formatter.
+import formatCurrency from "../../utils/formatCurrency";
+
 
 
 //   PART A
@@ -600,35 +603,26 @@ function Hero() {
     const recentTransactions = sortedTransactions.slice(0, 5);
 
 
-    // Create an array containing the information
-    // for our four dashboard summary cards.
+    // Store the four dashboard statistics.
     const stats = [
-
-        // Display the user's current balance.
         {
             title: "Total Balance",
-            amount: `₦${balance.toLocaleString()}`,
+            amount: formatCurrency(balance),
             color: "text-emerald-600",
         },
-
-        // Display the total income.
         {
             title: "Total Income",
-            amount: `₦${totalIncome.toLocaleString()}`,
+            amount: formatCurrency(totalIncome),
             color: "text-blue-600",
         },
-
-        // Display the total expenses.
         {
             title: "Total Expenses",
-            amount: `₦${totalExpenses.toLocaleString()}`,
+            amount: formatCurrency(totalExpenses),
             color: "text-red-600",
         },
-
-        // Display savings.
         {
             title: "Savings",
-            amount: `₦${savings.toLocaleString()}`,
+            amount: formatCurrency(savings),
             color: "text-purple-600",
         },
     ];
@@ -904,7 +898,7 @@ function Hero() {
                                         </p>
 
                                         <p className="text-xl font-bold text-emerald-600 mt-1">
-                                            ₦{totalGoalSaved.toLocaleString()}
+                                            {formatCurrency(totalGoalSaved)}
                                         </p>
                                     </div>
 
@@ -926,7 +920,7 @@ function Hero() {
                                         </p>
 
                                         <p className="text-xl font-bold text-blue-600 mt-1">
-                                            ₦{totalGoalTarget.toLocaleString()}
+                                            {formatCurrency(totalGoalTarget)}
                                         </p>
                                     </div>
 
@@ -943,7 +937,7 @@ function Hero() {
                                         </p>
 
                                         <p className="text-xl font-bold text-red-600 mt-1">
-                                            ₦{totalGoalRemaining.toLocaleString()}
+                                            {formatCurrency(totalGoalRemaining)}
                                         </p>
                                     </div>
                                 </div>

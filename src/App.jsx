@@ -1,15 +1,20 @@
-import Navbar from "./components/layouts/Navbar"
-import Hero from "./components/landing/Hero"
-import StatCard from "./components/common/StatCard"
 
+// Import the navigation bar.
+import Navbar from "./components/layouts/Navbar";
+
+// Import the main FinFlow dashboard.
+import Hero from "./components/landing/Hero";
+
+// Main application component.
 function App() {
   return (
     <>
+      {/* Displays the application navigation. */}
       <Navbar />
+
+      {/* Displays the main dashboard and its features. */}
       <Hero />
-      <StatCard />
     </>
-    
   );
 }
 
