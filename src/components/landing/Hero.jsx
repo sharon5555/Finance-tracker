@@ -49,6 +49,9 @@ import MonthlySummary from "../charts/MonthlySummary";
 // Import the reusable Nigerian Naira currency formatter.
 import formatCurrency from "../../utils/formatCurrency";
 
+// Import the reusable FinFlow data loader.
+import loadFinflowData from "../../utils/loadFinflowData";
+
 
 
 //   PART A
@@ -56,90 +59,32 @@ import formatCurrency from "../../utils/formatCurrency";
 function Hero() {
 
     // Store the user's starting balance.
-    // We start with an initial balance of ₦250,000.
     const startingBalance = 250000;
 
-
-    // Store all transactions created by the user.
     /*
-        When FinFlow opens:
-        - check if saved transactions exist in localStorage.
-        - if they exist, load them.
-        - if not, start with an empty array.
-     */
-    const [transactions, setTransactions] = useState(() => {
+      Load saved FinFlow information once.
 
-        // Get saved FinFlow data from the browser.
-        const savedData = localStorage.getItem(
-            "finflow_data"
-        );
-
-        // if data exists:
-        // convert it back from text into JavaScript.
-        if (savedData) {
-
-            const parsedData = JSON.parse(savedData);
-
-            // Make sure transactions is always an array.
-            // This prevents errors like:
-            // Cannot read properties of undefined (reading 'filter')
-            return Array.isArray(parsedData.transactions) 
-                ? parsedData.transactions 
-                : [];
-        }
-
-        // If there is no saved data, start with an empty array.
-        return [];
-    });
-
-
-    // PART B
-
-    /*
-        Store financial goal.
-
-        When FinFlow opens:
-        - Check whether saved goals exist in localStorage.
-        - If they exist, load them.
-        - If they don't exist, start with an empty array.
+      The same saved data will initialize:
+      - Transactions
+      - Financial goals
+      - Monthly budgets
     */
-    const [goals, setGoals] = useState(() => {
+    const [savedFinflowData] = useState(() => loadFinflowData());
 
-        // Get the saved FinFlow data from the browser.
-        const savedData = localStorage.getItem("finflow_data");
+    // Store all user transactions.
+    const [transactions, setTransactions] = useState(
+        () => savedFinflowData.transactions
+    );
 
-        // If saved data exists, convert it back into javascript.
-        if (savedData) {
+    // Store all financial goals.
+    const [goals, setGoals] = useState(
+        () => savedFinflowData.goals
+    );
 
-            const parsedData = JSON.parse(savedData);
-
-            //Make sure goals is always an array.
-            return Array.isArray(parsedData.goals)
-                ? parsedData.goals
-                : [];
-
-        }
-
-        // If there is no saved data, start with no goals.
-        return [];
-
-    });
-
-
-    // Store the user's monthly budgets.
-    const [budgets, setBudgets] = useState(() => {
-        try {
-            const savedData = JSON.parse(
-                localStorage.getItem("finflow_data") || "{}"
-            );
-
-            return Array.isArray(savedData.budgets)
-                ? savedData.budgets
-                : [];
-        } catch {
-            return [];
-        }
-    });
+    // Store all monthly budgets.
+    const [budgets, setBudgets] = useState(
+        () => savedFinflowData.budgets
+    );
 
 
     /*
@@ -206,38 +151,26 @@ function Hero() {
 
 
     /*
-        Add or update a financial goal.
-
-        If the goal already exists, we update it.
-        If it does not exist, we create a new goal.
+      Add a new financial goal or update an existing one.
+      Always use the latest goals array.
     */
     function addGoal(goal) {
-
-        // Check whether this goal already exists.
-        const existingGoal = goals.find(
-            (item) => item.id === goal.id
-        );
-
-
-        // If the goal already exists, update it.
-        if (existingGoal) {
-
-            setGoals(
-                goals.map((item) =>
-                    item.id === goal.id
-                        ? goal
-                        : item
-                )
+        setGoals((previousGoals) => {
+            // Check whether this goal already exists.
+            const existingGoal = previousGoals.some(
+                (item) => item.id === goal.id
             );
 
-            return;
-        }
+            // Update the existing goal if it is found.
+            if (existingGoal) {
+                return previousGoals.map((item) =>
+                    item.id === goal.id ? goal : item
+                );
+            }
 
-
-        // If the goal does not exist,
-        // add it as a new goal.
-        setGoals([...goals, goal]);
-
+            // Otherwise, add the new goal.
+            return [...previousGoals, goal];
+        });
     }
 
     /*
@@ -278,31 +211,23 @@ function Hero() {
     }
 
     /*
-    Delete a financial goal.
-
-    We first ask the user to confirm.
-    If they confirm, we remove the goal
-    from the goals array.
+      Delete a financial goal after user confirmation.
     */
     function deleteGoal(goalId) {
-
         // Ask the user to confirm the deletion.
         const confirmDelete = window.confirm(
             "Are you sure you want to delete this financial goal?"
         );
 
-
-        // Stop if the user clicks Cancel.
+        // Stop if the user cancels.
         if (!confirmDelete) {
             return;
         }
 
-
-        // Remove the selected goal from the goals array.
-        setGoals(
-            goals.filter((goal) => goal.id !== goalId)
+        // Remove the goal using the latest goals array.
+        setGoals((previousGoals) =>
+            previousGoals.filter((goal) => goal.id !== goalId)
         );
-
     }
 
 
@@ -338,34 +263,27 @@ function Hero() {
         // PART D
 
 
-    // Add a new transaction or update an existing transaction.
+    /*
+      Add a new transaction or update an existing one.
+    */
     function addTransaction(transaction) {
-
-        // Check whether this transaction already exists.
-        const existingTransaction = transactions.find(
-            (item) => item.id === transaction.id
-        );
-
-        // If the transaction already exists,
-        // replace it with the updated transaction.
-        if (existingTransaction) {
-
-            // Replace the old transaction with the updated transaction.
-            setTransactions(
-                transactions.map((item) =>
-                    item.id === transaction.id
-                        ? transaction
-                        : item
-                )
+        // Use the latest transactions array.
+        setTransactions((previousTransactions) => {
+            // Check whether the transaction already exists.
+            const existingTransaction = previousTransactions.some(
+                (item) => item.id === transaction.id
             );
 
-            // Stop the function after updating the transaction.
-            return;
-        }
+            // Update the existing transaction.
+            if (existingTransaction) {
+                return previousTransactions.map((item) =>
+                    item.id === transaction.id ? transaction : item
+                );
+            }
 
-        // If the transaction does not exist,
-        // add it to the transactions array.
-        setTransactions([...transactions, transaction]);
+            // Add a new transaction.
+            return [...previousTransactions, transaction];
+        });
     }
 
         // PART E
@@ -379,22 +297,23 @@ function Hero() {
     }
 
 
-    // Delete a transaction from the transactions array.
+    /*
+      Delete a transaction after user confirmation.
+    */
     function deleteTransaction(id) {
-
-        // Ask the user to confirm before deleting the transaction.
+        // Ask the user to confirm before deleting.
         const confirmDelete = window.confirm(
             "Are you sure you want to delete this transaction?"
         );
 
-        // If the user clicks Cancel, stop the function.
+        // Stop if the user cancels.
         if (!confirmDelete) {
             return false;
         }
 
-        // Remove the transaction with the matching ID.
-        setTransactions(
-            transactions.filter(
+        // Remove the transaction using the latest state.
+        setTransactions((previousTransactions) =>
+            previousTransactions.filter(
                 (transaction) => transaction.id !== id
             )
         );
@@ -468,8 +387,6 @@ function Hero() {
 
 
     // Calculate the total amount of all Income transactions.
-    // filter() keeps only Income transactions.
-    // reduce() adds all income amounts together.
     const totalIncome = transactions
         .filter((transaction) => transaction.type === "Income")
         .reduce(
@@ -479,8 +396,6 @@ function Hero() {
 
 
     // Calculate the total amount of all Expense transactions.
-    // filter() keeps only Expense transactions.
-    // reduce() adds all expense amounts together.
     const totalExpenses = transactions
         .filter((transaction) => transaction.type === "Expense")
         .reduce(
@@ -490,21 +405,12 @@ function Hero() {
 
 
     // Calculate the current balance.
-    // Starting balance + income - expenses.
     const balance = startingBalance + totalIncome - totalExpenses;
 
 
     // Calculate savings.
-    // Savings = total income - total expenses.
     const savings = totalIncome - totalExpenses;
 
-
-    /*
-        Calculate finanacial goal statistics.
-
-        These values will be used to create a quick summary 
-        of the user's goals.
-    */
 
     // Count how many goals the user has.
     const totalGoals = goals.length;
@@ -545,10 +451,7 @@ function Hero() {
         0
     );
 
-    /*
-        Calculate the total amount still needed 
-        across all financial goals.
-    */
+    // Calculate the total amount still needed across all goals.
     const totalGoalRemaining = Math.max(
         totalGoalTarget - totalGoalSaved,
         0
@@ -563,16 +466,7 @@ function Hero() {
         )
         : 0;
 
-    /*
-    Get only expense transactions.
-
-    The ExpenseChart does not need:
-    - Income
-    - Salary
-    - Freelance
-
-    It only needs expenses.
-    */
+    // Get only expense transactions.
     const expenseTransactions = transactions.filter(
         (transaction) => transaction.type === "Expense"
     );
@@ -580,26 +474,18 @@ function Hero() {
 
     // Create a list of transactions based on the selected filter.
     const filteredTransactions = transactions.filter((transaction) => {
-
-        // If "All" is selected, display every transaction.
         if (transactionFilter === "All") {
             return true;
         }
-
-        // Otherwise, only display transactions
-        // matching the selected type.
         return transaction.type === transactionFilter;
     });
 
-    // Sort transactions by date:
-    // Newest transactions appear first.
+    // Sort transactions by date (newest first).
     const sortedTransactions = [...filteredTransactions].sort(
         (a, b) => new Date(b.date) - new Date(a.date)
     );
 
-
     // Show only the five most recent transactions.
-    // The full transaction list remains stored in transactions.
     const recentTransactions = sortedTransactions.slice(0, 5);
 
 
@@ -628,13 +514,7 @@ function Hero() {
     ];
 
 
-    /*
-        Sort goals by priority.
-
-        High goals appear first,
-        followed by Medium,
-        then Low.
-    */
+    // Sort goals by priority.
     const priorityOrder = {
         High: 1,
         Medium: 2,
@@ -647,33 +527,15 @@ function Hero() {
             (priorityOrder[b.priority] || 2)
     );
 
-    /*
-        Filter the goals based on the user's selection.
-
-        Available filters: 
-        - All
-        -High
-        -Medium
-        -Low
-        -Completed
-    */
+    // Filter goals based on selection.
     const filteredGoals = sortedGoals.filter((goal) => {
-
-        //Show every goal.
         if (goalFilter === "All") {
             return true;
-
         }
-
-        //Show only completed goals.
         if (goalFilter === "Completed") {
             return Number(goal.currentAmount) >= Number(goal.targetAmount);
-
         }
-
-        // Show goals matching the selected priority.
         return goal.priority === goalFilter;
-
     });
 
 
@@ -683,104 +545,54 @@ function Hero() {
     return (
         <section className="bg-slate-50">
 
-            {/*
-                Main container:
-                Keeps the content centered and adds spacing.
-            */}
             <div className="max-w-7xl mx-auto px-6 py-24">
 
-                {/*
-                    Main content:
-                    Contains the welcome message, buttons,
-                    dashboard summary, transaction form,
-                    and recent transactions.
-                */}
                 <div>
 
-                    {/* Welcome message. */}
                     <p className="text-emerald-600 font-semibold mb-3">
                         Welcome to Finflow
                     </p>
 
 
-                    {/* Main page heading. */}
                     <h1 className="text-5xl lg:text-6xl font-bold text-slate-900 leading-tight">
                         Take Control of Your Money Today
                     </h1>
 
 
-                    {/* Short description of FinFlow. */}
                     <p className="mt-6 text-lg text-slate-600">
                         Track your income, expenses, savings, and financial goals in one
                         beautiful and secure application.
                     </p>
 
 
-                    {/*
-                        Main action buttons:
-                        Get Started and Learn More.
-                    */}
                     <div className="mt-10 flex gap-5">
-
                         <Button
                             text="Get Started"
                             variant="primary"
                         />
-
                         <Button
                             text="Learn More"
                             variant="secondary"
                         />
-
                     </div>
 
 
-                    {/*
-                        Dashboard Summary:
-                        Displays Balance, Income, Expenses, and Savings.
-                    */}
                     <div className="mt-10">
-
                         <DashboardSummary stats={stats} />
-
                     </div>
 
 
-                    {/*
-                        Finance Chart:
-
-                        Displays a visual comparison
-                        between total income and total expenses.
-                    */}
                     <div className="mt-10 grid grid-cols-1 lg:grid-cols-2 gap-8">
-
-                        {/*
-                            Income vs Expenses🧮 shows how much money came in
-                            compared with how much was spent.
-                        */}
-
                         <FinanceChart
                             income={totalIncome}
                             expenses={totalExpenses}
                         />
 
-
-                    {/*
-                        Expense Chart:
-
-                        shows where the user's money is being spent by category.
-                    */}
-
                         <ExpenseChart
                             expenses={expenseTransactions}
                         />
-                        
                     </div>
 
-                    {/*
-                        Monthly Financial Comparison, Insights, Spending Alerts,
-                        Budget Planner, & Budget Recommendations
-                    */}
                     <div className="mt-8 space-y-6">
                         <MonthlyComparison
                             transactions={transactions}
@@ -818,180 +630,91 @@ function Hero() {
                         />
                     </div>
 
-                    {/*
-                        Monthly Summary:
-
-                        Displays the current income,
-                        expenses, and savings totals.
-                    */}
                     <div className="mt-8">
-
                         <MonthlySummary
                             income={totalIncome}
                             expenses={totalExpenses}
                             savings={savings}
                         />
-
                     </div>
 
 
-                    {/*
-                        Goals Summary: 
-                        Gives the user a quick overview of all
-                        their financial goals.
-                    */}
                     <div className="mt-10">
-
                         <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6">
 
-                            {/* Section heading */}
                             <div className="flex items-center justify-between mb-6">
-
                                 <div>
                                     <p className="text-sm text-slate-500">
                                         Financial Goals
                                     </p>
-
                                     <h2 className="text-2xl font-bold text-slate-800">
                                         Your Goal Progress
                                     </h2>
                                 </div>
-
                                 <span className="text-emerald-600 font-bold">
                                     {Math.round(overallGoalProgress)}%
                                 </span>
-
                             </div>
 
-                            {/* Overall Progress bar */}
                             <div className="w-full h-3 bg-slate-100 rounded-full overflow-hidden mb-6">
-
                                 <div
                                     className="h-full bg-emerald-500 rounded-full transition-all duration-500"
                                     style={{
                                         width: `${overallGoalProgress}%`
                                     }}
-                                >
+                                ></div>
+                            </div>
 
+                            <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+                                <div className="bg-slate-50 rounded-xl p-4">
+                                    <p className="text-sm text-slate-500">Total Goals</p>
+                                    <p className="text-2xl font-bold text-slate-800 mt-1">{totalGoals}</p>
+                                </div>
+
+                                <div className="bg-slate-50 rounded-xl p-4">
+                                    <p className="text-sm text-slate-500">Saved</p>
+                                    <p className="text-xl font-bold text-emerald-600 mt-1">{formatCurrency(totalGoalSaved)}</p>
+                                </div>
+
+                                <div className="bg-slate-50 rounded-xl p-4">
+                                    <p className="text-sm text-slate-500">Completed</p>
+                                    <p className="text-2xl font-bold text-purple-600 mt-1">{completedGoals}</p>
+                                </div>
+
+                                <div className="bg-slate-50 rounded-xl p-4">
+                                    <p className="text-sm text-slate-500">Target</p>
+                                    <p className="text-xl font-bold text-blue-600 mt-1">{formatCurrency(totalGoalTarget)}</p>
+                                </div>
+
+                                <div className="bg-slate-50 rounded-xl p-4">
+                                    <p className="text-sm text-slate-500">Remaining</p>
+                                    <p className="text-xl font-bold text-red-600 mt-1">{formatCurrency(totalGoalRemaining)}</p>
                                 </div>
                             </div>
 
-
-                                {/* Goal statistics */}
-                                <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-
-                                    {/* Total goals */}
-                                    <div className="bg-slate-50 rounded-xl p-4">
-                                        <p className="text-sm text-slate-500">
-                                            Total Goals
-                                        </p>
-
-                                        <p className="text-2xl font-bold text-slate-800 mt-1">
-                                            {totalGoals}
-                                        </p>
-                                    </div>
-
-                                    {/* Amount saved */}
-                                    <div className="bg-slate-50 rounded-xl p-4">
-                                        <p className="text-sm text-slate-500">
-                                            Saved
-                                        </p>
-
-                                        <p className="text-xl font-bold text-emerald-600 mt-1">
-                                            {formatCurrency(totalGoalSaved)}
-                                        </p>
-                                    </div>
-
-                                    {/* Completed goals */}
-                                    <div className="bg-slate-50 rounded-xl p-4">
-                                        <p className="text-sm text-slate-500">
-                                            Completed
-                                        </p>
-
-                                        <p className="text-2xl font-bold text-purple-600 mt-1">
-                                            {completedGoals}
-                                        </p>
-                                    </div>
-
-                                    {/* Target amount */}
-                                    <div className="bg-slate-50 rounded-xl p-4">
-                                        <p className="text-sm text-slate-500">
-                                            Target
-                                        </p>
-
-                                        <p className="text-xl font-bold text-blue-600 mt-1">
-                                            {formatCurrency(totalGoalTarget)}
-                                        </p>
-                                    </div>
-
-                                    {/*
-                                        Remaining amount:
-
-                                        Shows how much money is still needed 
-                                        to complete all financial goals.
-                                    */}
-                                    <div className="bg-slate-50 rounded-xl p-4">
-
-                                        <p className="text-sm text-slate-500">
-                                            Remaining
-                                        </p>
-
-                                        <p className="text-xl font-bold text-red-600 mt-1">
-                                            {formatCurrency(totalGoalRemaining)}
-                                        </p>
-                                    </div>
-                                </div>
-
                         </div>
-
                     </div>
 
-                    {/* Shows the user's overall savings goal performance. */}
                     <div className="mt-8">
                         <GoalsPerformanceDashboard goals={goals} />
-
-                        {/* Provides useful insights and recommendations for savings goals. */}
                         <SmartSavingsInsights goals={goals} />
                     </div>
 
 
-
-                    {/*
-                        Financial Goal:
-
-                        Displays the user's progress
-                        toward the current financial goal.
-                    */}
                     <div className="mt-8 grid grid-cols-1 lg:grid-cols-2 gap-8">
-
-                        {/* 
-                            GoalForm handles both creating
-                            and editing financial goals.
-                        */}
                         <GoalForm
                             onAddGoal={addGoal}
                             editingGoal={editingGoal}
                             onFinishEditing={() => setEditingGoal(null)}
                         />
 
-
-                        {/* Existing Goals */}
                         <div className="space-y-4">
-
                             <h2 className="text-xl font-bold text-slate-800">
                                 Your Financial Goals
                             </h2>
 
-                            {/*
-                                Goal filters.
-
-                                The user can quickly switch between
-                                different types of goals.
-                            */}
                             <div className="flex flex-wrap gap-2 mt-4">
-
                                 {["All", "High", "Medium", "Low", "Completed"].map((filter) => (
-
                                     <button
                                         key={filter}
                                         type="button"
@@ -1007,20 +730,8 @@ function Hero() {
                                 ))}
                             </div>
 
-
-
-                            {/* 
-                                Display each financial goal.
-
-                                GoalCard sends the amount to add back
-                                to this component through addMoneyToGoal.
-                            */}
-
                             {filteredGoals.length > 0 ? (
-
                                 filteredGoals.map((goal) => (
-                            
-
                                     <GoalCard
                                         key={goal.id}
                                         name={goal.name}
@@ -1035,101 +746,49 @@ function Hero() {
                                         onDelete={() => deleteGoal(goal.id)}
                                     />
                                 ))
-
                             ) : (
-
-                                <div className="bg-white rounded-2xl border border-dashed
-                                    border-slate-300 p-8 text-center">
-
-                                        <h3 className="font-semibold text-slate-700">
-                                            {goalFilter === "All"
-                                                ? "No financial goals yet"
-                                                : `No ${goalFilter.toLowerCase()} goals found`}
-                                        </h3>
-
-                                        <p className="text-sm text-slate-500 mt-2">
-                                            {goalFilter === "All"
-                                                ? "No financial goals yet"
-                                                : `No ${goalFilter.toLowerCase()} goals found`}
-                                        </p>
-                                    </div>
-
+                                <div className="bg-white rounded-2xl border border-dashed border-slate-300 p-8 text-center">
+                                    <h3 className="font-semibold text-slate-700">
+                                        {goalFilter === "All"
+                                            ? "No financial goals yet"
+                                            : `No ${goalFilter.toLowerCase()} goals found`}
+                                    </h3>
+                                    <p className="text-sm text-slate-500 mt-2">
+                                        {goalFilter === "All"
+                                            ? "No financial goals yet"
+                                            : `No ${goalFilter.toLowerCase()} goals found`}
+                                    </p>
+                                </div>
                             )}
-
                         </div>
-
                     </div>
 
 
                                 {/* PART H */}
 
 
-                    {/*
-                        Transaction Area:
-                        Contains the transaction form and
-                        recent transactions.
-
-                        On small screens:
-                        They appear one below another.
-
-                        On large screens:
-                        They appear side-by-side.
-                    */}
                     <div className="mt-10 grid grid-cols-1 lg:grid-cols-2 gap-8">
-
-
-                        {/*
-                            Transaction Form:
-                            Allows the user to add or edit transactions.
-                        */}
                         <TransactionForm
                             onAddTransaction={addTransaction}
                             editingTransaction={editingTransaction}
                             onFinishEditing={finishEditing}
                         />
 
-
-                        {/*
-                            Recent Transactions:
-                            Displays the user's recent transactions.
-                        */}
                         <div className="mt-10">
-
-                            {/*
-                                Section heading:
-                                Displays the title and number
-                                of transactions currently shown.
-                            */}
                             <div className="flex items-center justify-between mb-4">
-
-                                {/* Recent transactions heading. */}
                                 <h2 className="text-2xl font-bold">
                                     Recent Transactions
                                 </h2>
-
-                                {/*
-                                    Transaction count:
-                                    Shows how many transactions are
-                                    currently displayed.
-                                */}
                                 <span className="text-sm text-slate-500">
                                     {recentTransactions.length}{" "}
                                     {recentTransactions.length === 1
                                         ? "transaction"
                                         : "transactions"}
                                 </span>
-
                             </div>
 
 
-                            {/*
-                                Filter buttons:
-                                Allow the user to display
-                                All, Income, or Expenses.
-                            */}
                             <div className="flex flex-wrap gap-2 mb-6">
-
-                                {/* All transactions button. */}
                                 <button
                                     onClick={() => setTransactionFilter("All")}
                                     className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
@@ -1141,8 +800,6 @@ function Hero() {
                                     All
                                 </button>
 
-
-                                {/* Income transactions button. */}
                                 <button
                                     onClick={() => setTransactionFilter("Income")}
                                     className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
@@ -1154,8 +811,6 @@ function Hero() {
                                     Income
                                 </button>
 
-
-                                {/* Expense transactions button. */}
                                 <button
                                     onClick={() => setTransactionFilter("Expense")}
                                     className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
@@ -1166,32 +821,12 @@ function Hero() {
                                 >
                                     Expenses
                                 </button>
-
                             </div>
 
 
-                            {/*
-                                Transaction list:
-                                max-h-[500px] prevents the list from
-                                making the page extremely tall.
-
-                                overflow-y-auto adds a vertical scrollbar
-                                when the content becomes taller than 500px.
-                            */}
                             <div className="max-h-[500px] overflow-y-auto pr-2">
-
-                                {/*
-                                    Check whether there are transactions
-                                    to display.
-                                */}
                                 {recentTransactions.length > 0 ? (
-
-                                    /*
-                                        Display each recent transaction
-                                        using the reusable TransactionCard.
-                                    */
                                     recentTransactions.map((transaction) => (
-
                                         <TransactionCard
                                             key={transaction.id}
                                             title={transaction.title}
@@ -1199,80 +834,41 @@ function Hero() {
                                             type={transaction.type}
                                             category={transaction.category}
                                             date={transaction.date}
-
-                                            // Allow the user to edit this transaction.
                                             onEdit={() =>
                                                 editTransaction(transaction.id)
                                             }
-
-                                            // Allow the user to delete this transaction.
                                             onDelete={() =>
                                                 deleteTransaction(transaction.id)
                                             }
                                         />
-
                                     ))
-
                                 ) : (
-
-                                    /*
-                                        Empty state:
-                                        Display this when there are no
-                                        transactions matching the filter.
-                                    */
-                                    <div
-                                        className="bg-white border border-dashed
-                                        border-slate-300 rounded-2xl p-8 text-center"
-                                    >
-
-                                        {/*
-                                            Empty-state icon:
-                                            Gives the user a visual indication that there are 
-                                            currently no transactions.
-
-                                         */}
-
+                                    <div className="bg-white border border-dashed border-slate-300 rounded-2xl p-8 text-center">
                                         <div className="flex justify-center mb-4">
-                                            <div className="w-14 h-14 rounded-full bg-slate-100
-                                                flex items-center justify-center">
-                                                    <FiInbox className="text-slate-400 text-2xl" />
-                                                </div>
-
+                                            <div className="w-14 h-14 rounded-full bg-slate-100 flex items-center justify-center">
+                                                <FiInbox className="text-slate-400 text-2xl" />
+                                            </div>
                                         </div>
 
-                                        {/* Empty-state heading. */}
                                         <h3 className="text-lg font-semibold text-slate-700">
                                             No transaction found
                                         </h3>
 
-                                        {/* Empty-state description. */}
                                         <p className="text-sm text-slate-500 mt-2">
                                             {transactionFilter === "All"
                                                 ? "Add your first transaction to start tracking your money."
                                                 : `No ${transactionFilter.toLowerCase()} transactions found.`}
                                         </p>
-
                                     </div>
                                 )}
-
                             </div>
 
-                            {/*
-                                Complete Transaction History
-
-                                This section is placed AFTER the entire
-                                Trasaction Area.
-                            */}
                             <TransactionHistory
                                 transactions={transactions}
                                 onEdit={editTransaction}
                                 onDelete={deleteTransaction}
                             />
-
-
-
                         </div>
-
                     </div>
 
                 </div>
@@ -1282,6 +878,5 @@ function Hero() {
         </section>
     );
 }
-
 
 export default Hero;
