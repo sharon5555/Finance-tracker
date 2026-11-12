@@ -52,6 +52,9 @@ import formatCurrency from "../../utils/formatCurrency";
 // Import the reusable FinFlow data loader.
 import loadFinflowData from "../../utils/loadFinflowData";
 
+// Import the reusable date validation function.
+import isValidDate from "../../utils/isValidDate";
+
 
 
 //   PART A
@@ -88,41 +91,43 @@ function Hero() {
 
 
     /*
-        Save all FinFlow data whenever transactions change.
+        SAVE FINFLOW DATA
 
-        We store an object so we can add more data later:
-        - transactions
-        - user settings
-        - financial goals
-        - preferences
+        Automatically save transactions, goals and budgets
+        whenever any of them changes.
 
-        This keeps the user's data available
-        even after refreshing the browser.
+        Catch storage errors so they do not crash the application.
     */
     useEffect(() => {
 
+        // Prepare all application data for saving.
         const finflowData = {
-
-            // save all user transactions.
             transactions: transactions,
-
-            //Save all financial goals.
             goals: goals,
-
-            //Save all monthly budgets.
             budgets: budgets,
-
-            // placeholder for future settings.
-            settings:{}
-
+            settings: {}
         };
 
-        // convert the object into text, 
-        // because localStorage stores only text.
-        localStorage.setItem(
-            "finflow_data",
-            JSON.stringify(finflowData)
-        );
+        try {
+
+            // Convert the application data into JSON text.
+            const serializedData = JSON.stringify(finflowData);
+
+            // Save the data in the browser's LocalStorage.
+            localStorage.setItem(
+                "finflow_data",
+                serializedData
+            );
+
+        } catch (error) {
+
+            // Log the error for debugging.
+            console.error(
+                "Unable to save FinFlow data:",
+                error
+            );
+
+        }
 
     }, [transactions, goals, budgets]);
 
@@ -142,6 +147,9 @@ function Hero() {
     // null means that no goal is being edited.
     const [editingGoal, setEditingGoal] = useState(null);
 
+    // Store the success notification displayed to the user.
+    const [toast, setToast] = useState(null);
+
     /*
         Store the currently selected goal filter.
 
@@ -151,54 +159,189 @@ function Hero() {
 
 
     /*
-      Add a new financial goal or update an existing one.
-      Always use the latest goals array.
+      SUCCESS NOTIFICATION
+
+      Automatically hide the notification after 3 seconds.
+    */
+    useEffect(() => {
+
+        // Do nothing when there is no notification.
+        if (!toast) return;
+
+        // Hide the notification after 3 seconds.
+        const timer = setTimeout(() => {
+            setToast(null);
+        }, 3000);
+
+        // Clean up the timer when the notification changes.
+        return () => clearTimeout(timer);
+
+    }, [toast]);
+
+
+    /*
+        ADD OR UPDATE A FINANCIAL GOAL
+
+        Validate goal information before saving it.
+        This also supports editing existing goals.
     */
     function addGoal(goal) {
+
+        // Make sure the supplied goal is a valid object.
+        if (
+            !goal ||
+            typeof goal !== "object" ||
+            Array.isArray(goal)
+        ) {
+            alert("Invalid financial goal information.");
+            return false;
+        }
+
+        // Remove unnecessary spaces from the goal name.
+        const trimmedName = String(goal.name || "").trim();
+
+        // Convert the target and saved amounts into numbers.
+        const numericTarget = Number(goal.targetAmount);
+        const numericSaved = Number(goal.currentAmount ?? 0);
+
+        // Available priority levels.
+        const validPriorities = ["High", "Medium", "Low"];
+
+        // Validate the goal name.
+        if (!trimmedName) {
+            alert("Please enter a financial goal name.");
+            return false;
+        }
+
+        // Validate the target amount.
+        if (
+            goal.targetAmount === "" ||
+            goal.targetAmount === null ||
+            !Number.isFinite(numericTarget) ||
+            numericTarget <= 0
+        ) {
+            alert("Please enter a valid positive target amount.");
+            return false;
+        }
+
+        // Validate the current savings amount.
+        if (
+            !Number.isFinite(numericSaved) ||
+            numericSaved < 0
+        ) {
+            alert("Please enter a valid savings amount.");
+            return false;
+        }
+
+        // Validate the goal priority.
+        if (!validPriorities.includes(goal.priority)) {
+            alert("Please select a valid goal priority.");
+            return false;
+        }
+
+        // Validate the optional target date.
+        const targetDate = String(goal.targetDate || "");
+
+        // Validate the target date when one is provided.
+        if (
+            goal.targetDate &&
+            !isValidDate(goal.targetDate)
+        ) {
+            alert("Please enter a valid goal target date.");
+            return false;
+        }
+
+        // Prepare a clean goal object.
+        const validatedGoal = {
+            ...goal,
+            id: goal.id || Date.now().toString(),
+            name: trimmedName,
+            targetAmount: numericTarget,
+            currentAmount: numericSaved,
+            targetDate,
+        };
+
+        // Check whether this goal already exists before updating state.
+        const isUpdating = goals.some(
+            (item) => item.id === validatedGoal.id
+        );
+
+        // Save or update the goal using the latest goals array.
         setGoals((previousGoals) => {
+
             // Check whether this goal already exists.
             const existingGoal = previousGoals.some(
-                (item) => item.id === goal.id
+                (item) => item.id === validatedGoal.id
             );
 
-            // Update the existing goal if it is found.
+            // Update the existing goal.
             if (existingGoal) {
                 return previousGoals.map((item) =>
-                    item.id === goal.id ? goal : item
+                    item.id === validatedGoal.id
+                        ? validatedGoal
+                        : item
                 );
             }
 
-            // Otherwise, add the new goal.
-            return [...previousGoals, goal];
+            // Add a new goal.
+            return [...previousGoals, validatedGoal];
         });
+
+        // Display feedback after a successful goal save.
+        setToast({
+            type: "success",
+            message: isUpdating ? "Goal updated successfully!" : "Goal created successfully!"
+        });
+
+        return true;
     }
 
     /*
-        Add money to a specific financial goal.
+        ADD MONEY TO A FINANCIAL GOAL
 
-        Functional state updates ensure we always use
-        the latest version of the goals array.
+        Validate the goal and amount before updating the savings.
     */
     function addMoneyToGoal(goalId, amount) {
 
-        // Convert the amount into a number.
-        const numericAmount = Number(amount);
-
-        // Reject invalid amounts.
-        if (!Number.isFinite(numericAmount) || numericAmount <= 0) {
-            return;
+        // Make sure a valid goal ID was supplied.
+        if (!goalId) {
+            alert("Please select a valid financial goal.");
+            return false;
         }
 
+        // Find the selected goal.
+        const selectedGoal = goals.find(
+            (goal) => goal.id === goalId
+        );
+
+        // Stop if the selected goal does not exist.
+        if (!selectedGoal) {
+            alert("The selected financial goal could not be found.");
+            return false;
+        }
+
+        // Convert the supplied amount into a number.
+        const numericAmount = Number(amount);
+
+        // Reject empty, invalid, zero, or negative amounts.
+        if (
+            amount === "" ||
+            amount === null ||
+            !Number.isFinite(numericAmount) ||
+            numericAmount <= 0
+        ) {
+            alert("Please enter a valid positive savings amount.");
+            return false;
+        }
+
+        // Update the selected goal using the latest state.
         setGoals((previousGoals) =>
             previousGoals.map((goal) => {
 
-                // Find the goal receiving the money.
+                // Add money only to the selected goal.
                 if (goal.id === goalId) {
-
-                    // Convert the existing savings into a number.
                     const currentSaved = Number(goal.currentAmount) || 0;
 
-                    // Add the new amount to the existing savings.
                     return {
                         ...goal,
                         currentAmount: currentSaved + numericAmount
@@ -208,53 +351,67 @@ function Hero() {
                 return goal;
             })
         );
+
+        // Display success feedback.
+        setToast({
+            type: "success",
+            message: `${formatCurrency(numericAmount)} added to ${selectedGoal.name}!`
+        });
+
+        return true;
     }
 
     /*
-      Delete a financial goal after user confirmation.
+        DELETE A FINANCIAL GOAL
+
+        Confirm the deletion before removing the goal.
+        Only display success feedback when deletion is confirmed.
     */
     function deleteGoal(goalId) {
+
+        // Make sure a valid goal ID was supplied.
+        if (!goalId) {
+            alert("Please select a valid financial goal.");
+            return false;
+        }
+
+        // Find the goal that should be deleted.
+        const goalToDelete = goals.find(
+            (goal) => goal.id === goalId
+        );
+
+        // Stop if the goal does not exist.
+        if (!goalToDelete) {
+            alert("The selected financial goal could not be found.");
+            return false;
+        }
+
         // Ask the user to confirm the deletion.
         const confirmDelete = window.confirm(
-            "Are you sure you want to delete this financial goal?"
+            `Are you sure you want to delete "${goalToDelete.name}"?`
         );
 
         // Stop if the user cancels.
         if (!confirmDelete) {
-            return;
+            return false;
         }
 
-        // Remove the goal using the latest goals array.
+        // Remove the selected goal using the latest state.
         setGoals((previousGoals) =>
-            previousGoals.filter((goal) => goal.id !== goalId)
-        );
-    }
-
-
-    /*
-        Select the goal that the user wants to edit.
-
-        We find the goal using its ID and store it
-        in editingGoal.
-    */
-    function editGoal(goalId) {
-
-        // Find the selected goal.
-        const goalToEdit = goals.find(
-            (goal) => goal.id === goalId
+            previousGoals.filter(
+                (goal) => goal.id !== goalId
+            )
         );
 
+        // Display a success notification.
+        setToast({
+            type: "success",
+            message: `${goalToDelete.name} deleted successfully!`
+        });
 
-        // Stop if the goal cannot be found.
-        if (!goalToEdit) {
-            return;
-        }
-
-
-        // Store the selected goal.
-        setEditingGoal(goalToEdit);
-
+        return true;
     }
+
 
     function handleEditGoal(goal) {
         setEditingGoal(goal);
@@ -264,27 +421,112 @@ function Hero() {
 
 
     /*
-      Add a new transaction or update an existing one.
+      ADD OR UPDATE A TRANSACTION
+
+      Validate transaction information before allowing
+      it into the application's state.
     */
     function addTransaction(transaction) {
+
+        // Make sure the supplied transaction is an object.
+        if (
+            !transaction ||
+            typeof transaction !== "object" ||
+            Array.isArray(transaction)
+        ) {
+            alert("Invalid transaction information.");
+            return false;
+        }
+
+        // Clean the transaction title.
+        const trimmedTitle = String(transaction.title || "").trim();
+
+        // Convert the amount into a number.
+        const numericAmount = Number(transaction.amount);
+
+        // Available transaction categories.
+        const validCategories = [
+            "Salary",
+            "Freelance",
+            "Business",
+            "Investment",
+            "Food",
+            "Transport",
+            "Bills",
+            "Shopping",
+            "Entertainment"
+        ];
+
+        // Validate the transaction title.
+        if (!trimmedTitle) {
+            alert("A transaction title is required.");
+            return false;
+        }
+
+        // Validate the transaction amount.
+        if (
+            transaction.amount === "" ||
+            transaction.amount === null ||
+            !Number.isFinite(numericAmount) ||
+            numericAmount <= 0
+        ) {
+            alert("Please provide a valid positive transaction amount.");
+            return false;
+        }
+
+        // Validate the transaction type.
+        if (!["Income", "Expense"].includes(transaction.type)) {
+            alert("Please select a valid transaction type.");
+            return false;
+        }
+
+        // Validate the transaction category.
+        if (!validCategories.includes(transaction.category)) {
+            alert("Please select a valid transaction category.");
+            return false;
+        }
+
+        // Validate the transaction date.
+        const dateValue = String(transaction.date || "");
+
+        // Make sure the transaction date is valid.
+        if (!isValidDate(transaction.date)) {
+            alert("Please enter a valid transaction date.");
+            return false;
+        }
+
+        // Prepare a clean transaction object.
+        const validatedTransaction = {
+            ...transaction,
+            title: trimmedTitle,
+            amount: numericAmount,
+            date: dateValue
+        };
+
         // Use the latest transactions array.
         setTransactions((previousTransactions) => {
+
             // Check whether the transaction already exists.
             const existingTransaction = previousTransactions.some(
-                (item) => item.id === transaction.id
+                (item) => item.id === validatedTransaction.id
             );
 
             // Update the existing transaction.
             if (existingTransaction) {
                 return previousTransactions.map((item) =>
-                    item.id === transaction.id ? transaction : item
+                    item.id === validatedTransaction.id
+                        ? validatedTransaction
+                        : item
                 );
             }
 
-            // Add a new transaction.
-            return [...previousTransactions, transaction];
+            // Otherwise, add the new transaction.
+            return [...previousTransactions, validatedTransaction];
         });
+
+        return true;
     }
+
 
         // PART E
 
@@ -298,15 +540,36 @@ function Hero() {
 
 
     /*
-      Delete a transaction after user confirmation.
+        DELETE A TRANSACTION
+
+        Confirm deletion, remove the transaction,
+        and display a success notification.
     */
     function deleteTransaction(id) {
-        // Ask the user to confirm before deleting.
-        const confirmDelete = window.confirm(
-            "Are you sure you want to delete this transaction?"
+
+        // Check that a transaction ID was provided.
+        if (!id) {
+            alert("Please select a valid transaction.");
+            return false;
+        }
+
+        // Find the transaction before deleting it.
+        const transactionToDelete = transactions.find(
+            (transaction) => transaction.id === id
         );
 
-        // Stop if the user cancels.
+        // Stop if the transaction does not exist.
+        if (!transactionToDelete) {
+            alert("The selected transaction could not be found.");
+            return false;
+        }
+
+        // Ask the user to confirm the deletion.
+        const confirmDelete = window.confirm(
+            `Are you sure you want to delete "${transactionToDelete.title}"?`
+        );
+
+        // Do nothing if the user cancels.
         if (!confirmDelete) {
             return false;
         }
@@ -317,6 +580,12 @@ function Hero() {
                 (transaction) => transaction.id !== id
             )
         );
+
+        // Display a success notification.
+        setToast({
+            type: "success",
+            message: `${transactionToDelete.title} deleted successfully!`
+        });
 
         return true;
     }
@@ -344,24 +613,82 @@ function Hero() {
     }
 
 
-    // Add a new budget or update an existing category's budget.
+    /*
+      ADD OR UPDATE A MONTHLY BUDGET
+
+      Validate budget information before updating application state.
+    */
     function addBudget(newBudget) {
 
+        // Make sure the supplied budget is an object.
+        if (
+            !newBudget ||
+            typeof newBudget !== "object" ||
+            Array.isArray(newBudget)
+        ) {
+            alert("Invalid budget information.");
+            return false;
+        }
+
+        // Available budget categories.
+        const validCategories = [
+            "Food",
+            "Transport",
+            "Bills",
+            "Shopping",
+            "Entertainment",
+            "Other"
+        ];
+
+        // Normalize the category.
+        const normalizedCategory = String(
+            newBudget.category || ""
+        ).trim().toLowerCase();
+
+        // Find the correct category.
+        const selectedCategory = validCategories.find(
+            (item) => item.toLowerCase() === normalizedCategory
+        );
+
+        // Convert the budget amount into a number.
+        const numericAmount = Number(newBudget.amount);
+
+        // Validate the category.
+        if (!selectedCategory) {
+            alert("Please select a valid budget category.");
+            return false;
+        }
+
+        // Validate the budget amount.
+        if (
+            newBudget.amount === "" ||
+            newBudget.amount === null ||
+            !Number.isFinite(numericAmount) ||
+            numericAmount <= 0
+        ) {
+            alert("Please enter a valid positive budget amount.");
+            return false;
+        }
+
+        // Update the budget using the latest state.
         setBudgets((previousBudgets) => {
 
-            // Compare category names without case differences.
+            // Check whether this category already has a budget.
             const existingBudget = previousBudgets.find(
                 (budget) =>
                     String(budget.category).trim().toLowerCase() ===
-                    String(newBudget.category).trim().toLowerCase()
+                    selectedCategory.toLowerCase()
             );
 
             // Update the existing category budget.
             if (existingBudget) {
-
                 return previousBudgets.map((budget) =>
                     budget.id === existingBudget.id
-                        ? { ...budget, amount: Number(newBudget.amount) }
+                        ? {
+                            ...budget,
+                            category: selectedCategory,
+                            amount: numericAmount
+                        }
                         : budget
                 );
             }
@@ -371,18 +698,65 @@ function Hero() {
                 ...previousBudgets,
                 {
                     ...newBudget,
-                    amount: Number(newBudget.amount),
+                    category: selectedCategory,
+                    amount: numericAmount,
                     id: Date.now().toString()
                 }
             ];
         });
+
+        return true;
     }
 
-    // Delete a budget.
+    /*
+        DELETE A MONTHLY BUDGET
+
+        Confirm deletion, remove the selected budget,
+        and notify the user when the deletion succeeds.
+    */
     function deleteBudget(id) {
-        setBudgets((previousBudgets) =>
-            previousBudgets.filter((budget) => budget.id !== id)
+
+        // Make sure a valid budget ID was supplied.
+        if (!id) {
+            alert("Please select a valid budget.");
+            return false;
+        }
+
+        // Find the budget before deleting it.
+        const budgetToDelete = budgets.find(
+            (budget) => budget.id === id
         );
+
+        // Stop if the budget does not exist.
+        if (!budgetToDelete) {
+            alert("The selected budget could not be found.");
+            return false;
+        }
+
+        // Ask the user to confirm the deletion.
+        const confirmDelete = window.confirm(
+            `Are you sure you want to delete your ${budgetToDelete.category} budget?`
+        );
+
+        // Stop if the user cancels.
+        if (!confirmDelete) {
+            return false;
+        }
+
+        // Remove the selected budget using the latest state.
+        setBudgets((previousBudgets) =>
+            previousBudgets.filter(
+                (budget) => budget.id !== id
+            )
+        );
+
+        // Display a success notification.
+        setToast({
+            type: "success",
+            message: `${budgetToDelete.category} budget deleted successfully!`
+        });
+
+        return true;
     }
 
 
@@ -543,7 +917,55 @@ function Hero() {
 
     // Return the main Hero section of the FinFlow page.
     return (
-        <section className="bg-slate-50">
+        <section className="bg-slate-50 relative">
+
+            {/* SUCCESS NOTIFICATION */}
+            {toast && (
+                <div
+                    role="status"
+                    aria-live="polite"
+                    className="fixed top-5 right-5 z-50 flex items-center gap-3 rounded-xl border border-emerald-200 bg-white px-5 py-4 shadow-lg"
+                >
+                    {/* Success icon */}
+                    <span className="flex h-10 w-10 items-center justify-center rounded-full bg-emerald-100 text-emerald-600">
+                        <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2.5"
+                            className="h-6 w-6"
+                        >
+                            <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                d="M5 12l4 4L19 6"
+                            />
+                        </svg>
+                    </span>
+
+                    {/* Success message */}
+                    <div>
+                        <p className="font-semibold text-slate-800">
+                            Success!
+                        </p>
+
+                        <p className="text-sm text-slate-600">
+                            {toast.message}
+                        </p>
+                    </div>
+
+                    {/* Close notification button */}
+                    <button
+                        type="button"
+                        onClick={() => setToast(null)}
+                        aria-label="Close notification"
+                        className="ml-2 text-slate-400 hover:text-slate-700"
+                    >
+                        &times;
+                    </button>
+                </div>
+            )}
 
             <div className="max-w-7xl mx-auto px-6 py-24">
 
@@ -767,7 +1189,7 @@ function Hero() {
                                 {/* PART H */}
 
 
-                    <div className="mt-10 grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    <div className="max-w-7xl mx-auto px-6 py-24">
                         <TransactionForm
                             onAddTransaction={addTransaction}
                             editingTransaction={editingTransaction}

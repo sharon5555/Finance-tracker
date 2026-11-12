@@ -1,28 +1,27 @@
 import { useEffect, useState } from "react";
 
+// Import the reusable date validator.
+import isValidDate from "../../utils/isValidDate";
 
 /*
-    GoalForm allows the user to create
-    a new financial goal.
+    GOAL FORM
+
+    Allows users to create and edit financial goals.
 
     The form collects:
     - Goal name
     - Target amount
-    - Starting amount
-
-    GoalForm can now handle both creating
-    and editing financial goals.
+    - Amount already saved
+    - Target date
+    - Priority
 */
 function GoalForm({
-
     onAddGoal,
     editingGoal,
     onFinishEditing
 }) {
 
-
-
-    // Store the name of the goal.
+    // Store the goal name.
     const [name, setName] = useState("");
 
     // Store the target amount.
@@ -31,154 +30,166 @@ function GoalForm({
     // Store the amount already saved.
     const [currentAmount, setCurrentAmount] = useState("");
 
-    /*
-        Store the deadline for the financial goal.
-    */
+    // Store the optional goal deadline.
     const [targetDate, setTargetDate] = useState("");
 
-    /*
-        store the priority level of the financial goal.
-
-        High   → Most important
-        Medium → Normal priority
-        Low    → Less urgent 
-    */
+    // Store the goal priority.
     const [priority, setPriority] = useState("Medium");
 
+    // Store validation and submission errors.
+    const [error, setError] = useState("");
 
     /*
-        When the user clicks Edit, load the selected
-        goal's current information into the form.
+        Load existing goal information when editing.
     */
     useEffect(() => {
 
-        // If no goal is selected for editing, do nothing.
         if (!editingGoal) {
             return;
         }
 
-        // Fill the inputs with the existing goal information.
-        setName(editingGoal.name);
-        setTargetAmount(String(editingGoal.targetAmount));
-        setCurrentAmount(String(editingGoal.currentAmount));
-
-        // Load the existing goal deadline when editing.
+        setName(editingGoal.name || "");
+        setTargetAmount(String(editingGoal.targetAmount ?? ""));
+        setCurrentAmount(String(editingGoal.currentAmount ?? ""));
         setTargetDate(editingGoal.targetDate || "");
-
-        // Load the existing goal priority when editing.
         setPriority(editingGoal.priority || "Medium");
+
+        // Clear previous validation messages.
+        setError("");
 
     }, [editingGoal]);
 
+    /*
+        Clear the form after a successful save.
+    */
+    function resetForm() {
+        setName("");
+        setTargetAmount("");
+        setCurrentAmount("");
+        setTargetDate("");
+        setPriority("Medium");
+        setError("");
+    }
 
     /*
-        This function runs when
-        the user submits the form.
+        Validate and submit the financial goal.
     */
     function handleSubmit(event) {
 
         // Prevent the browser from refreshing.
         event.preventDefault();
 
+        // Clear previous errors before validation.
+        setError("");
 
-        // Make sure the user entered a goal name.
-        if (name.trim() === "") {
+        // Validate the goal name.
+        const trimmedName = name.trim();
 
-            alert("Please enter a goal name.");
-
+        if (!trimmedName) {
+            setError("Please enter a goal name.");
             return;
         }
 
-
-        // Convert the target amount to a number.
+        // Convert the target amount into a number.
         const target = Number(targetAmount);
 
-        // Make sure the target amount is a valid positive number.
         if (
             targetAmount.trim() === "" ||
             !Number.isFinite(target) ||
             target <= 0
         ) {
-            alert("Please enter a valid target amount.");
+            setError("Please enter a valid positive target amount.");
             return;
         }
 
-
-        // Convert the starting amount to a number.
+        // Convert the starting savings amount.
         const startingAmount = currentAmount.trim() === ""
             ? 0
             : Number(currentAmount);
 
-        // Make sure the starting amount is a valid number.
         if (
             !Number.isFinite(startingAmount) ||
             startingAmount < 0
         ) {
-            alert("Please enter a valid starting amount.");
+            setError("Please enter a valid starting savings amount.");
             return;
         }
 
-        // Make sure the starting amount does not exceed the target.
+        // Keep the existing rule that starting savings
+        // cannot exceed the target amount.
         if (startingAmount > target) {
-            alert("Starting amount cannot be greater than the target.");
+            setError("Starting amount cannot be greater than the target.");
             return;
         }
 
+        // Validate the selected priority.
+        const validPriorities = ["High", "Medium", "Low"];
+
+        if (!validPriorities.includes(priority)) {
+            setError("Please select a valid goal priority.");
+            return;
+        }
 
         /*
-            Create the goal information.
+            Validate the optional target date.
 
-            targetDate stores the deadline chosen by the user.
+            Empty dates are allowed.
+            Selected dates must be valid calendar dates.
+        */
+        if (targetDate && !isValidDate(targetDate)) {
+            setError("Please select a valid target date.");
+            return;
+        }
+
+        /*
+            Prepare the goal information.
+
+            Preserve the existing ID when editing.
         */
         const newGoal = {
-
-            // keep the existing ID when editing.
             id: editingGoal
                 ? editingGoal.id
                 : Date.now(),
 
-            // Goal name.
-            name: name.trim(),
-
-            // Amount the user wants to reach.
+            name: trimmedName,
             targetAmount: target,
-
-            // Amount already saved.
             currentAmount: startingAmount,
-
-            // Deadline for completing the goal.
-            targetDate: targetDate,
-
-            // Goal priority.
-            priority: priority
-
+            targetDate,
+            priority
         };
 
+        /*
+            Send the goal to Hero.jsx.
 
-        // Send the goal to Hero.jsx.
-        onAddGoal(newGoal);
+            Only clear the form if the parent confirms
+            that the goal was accepted.
+        */
+        try {
 
-        // If we were editing a goal, leave edit mode after saving (with optional safeguard).
-        if (editingGoal && typeof onFinishEditing === "function") {
-            onFinishEditing();
+            const saveResult = onAddGoal(newGoal);
+
+            // Stop if the parent rejects the goal.
+            if (saveResult === false) {
+                setError("The goal could not be saved. Please check your information.");
+                return;
+            }
+
+            // Exit edit mode after a successful update.
+            if (editingGoal && typeof onFinishEditing === "function") {
+                onFinishEditing();
+            }
+
+            // Clear all form fields.
+            resetForm();
+
+        } catch (submissionError) {
+
+            // Handle unexpected submission errors.
+            console.error("Unable to save financial goal:", submissionError);
+
+            setError("Something went wrong while saving your goal. Please try again.");
         }
-
-
-        // Clear the form after saving.
-        setName("");
-
-        setTargetAmount("");
-
-        setCurrentAmount("");
-
-        // Clear the target date after saving.
-        setTargetDate("");
-
-        //Reset the priority back to Medium.
-        setPriority("Medium");
-
     }
-
 
     return (
 
@@ -199,9 +210,17 @@ function GoalForm({
 
             </div>
 
+            <form onSubmit={handleSubmit} noValidate>
 
-            <form onSubmit={handleSubmit}>
-
+                {/* Display validation errors inside the form. */}
+                {error && (
+                    <div
+                        role="alert"
+                        className="mb-5 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600"
+                    >
+                        {error}
+                    </div>
+                )}
 
                 {/* Goal name */}
                 <div className="mb-4">
@@ -214,19 +233,17 @@ function GoalForm({
                         type="text"
                         placeholder="e.g. Emergency Fund"
                         value={name}
-                        onChange={(event) =>
-                            setName(event.target.value)
-                        }
+                        onChange={(event) => {
+                            setName(event.target.value);
+                            setError("");
+                        }}
                         className="w-full border rounded-lg px-4 py-2"
-                        required
+                        aria-invalid={!!error}
                     />
 
                 </div>
 
-
-                {/* 
-                    Target amount. 
-                */}
+                {/* Target amount */}
                 <div className="mb-4">
 
                     <label className="block mb-2 font-medium text-slate-700">
@@ -237,19 +254,19 @@ function GoalForm({
                         type="number"
                         placeholder="e.g. 500000"
                         value={targetAmount}
-                        onChange={(event) =>
-                            setTargetAmount(event.target.value)
-                        }
+                        onChange={(event) => {
+                            setTargetAmount(event.target.value);
+                            setError("");
+                        }}
                         className="w-full border rounded-lg px-4 py-2"
                         min="0.01"
                         step="0.01"
-                        required
+                        aria-invalid={!!error}
                     />
 
                 </div>
 
-
-                {/* Current amount */}
+                {/* Current savings amount */}
                 <div className="mb-6">
 
                     <label className="block mb-2 font-medium text-slate-700">
@@ -260,42 +277,38 @@ function GoalForm({
                         type="number"
                         placeholder="e.g. 100000"
                         value={currentAmount}
-                        onChange={(event) =>
-                            setCurrentAmount(event.target.value)
-                        }
+                        onChange={(event) => {
+                            setCurrentAmount(event.target.value);
+                            setError("");
+                        }}
                         className="w-full border rounded-lg px-4 py-2"
                         min="0"
                         step="0.01"
+                        aria-invalid={!!error}
                     />
 
                 </div>
 
-                {/*
-                    Target Date: 
-                    The user chooses when they want to 
-                    complete this financial goal.
-                */}
+                {/* Optional target date */}
                 <div className="mb-4">
 
                     <label className="block mb-2 font-medium text-slate-700">
                         Target Date
                     </label>
 
-                    <input 
+                    <input
                         type="date"
                         value={targetDate}
-                        onChange={(event) =>
-                            setTargetDate(event.target.value)
-                        }
+                        onChange={(event) => {
+                            setTargetDate(event.target.value);
+                            setError("");
+                        }}
                         className="w-full border rounded-lg px-4 py-2"
                     />
+
                 </div>
 
-                {/*
-                    Goal Priority: 
-                    Allows the user to decide how important this
-                    financial goal is.
-                */}
+                {/* Goal priority */}
                 <div className="mb-4">
 
                     <label className="block mb-2 font-medium text-slate-700">
@@ -304,34 +317,25 @@ function GoalForm({
 
                     <select
                         value={priority}
-                        onChange={(event) =>
-                            setPriority(event.target.value)
-                        }
+                        onChange={(event) => {
+                            setPriority(event.target.value);
+                            setError("");
+                        }}
                         className="w-full border rounded-lg px-4 py-2"
                     >
 
-                        <option value="High">
-                            High
-                        </option>
-
-                        <option value="Medium">
-                            Medium
-                        </option>
-
-                        <option value="Low">
-                            Low
-                        </option>
+                        <option value="High">High</option>
+                        <option value="Medium">Medium</option>
+                        <option value="Low">Low</option>
 
                     </select>
 
                 </div>
 
-
                 {/* Submit button */}
                 <button
                     type="submit"
-                    className="w-full bg-emerald-600 text-white py-3 rounded-lg
-                    font-semibold hover:bg-emerald-700"
+                    className="w-full bg-emerald-600 text-white py-3 rounded-lg font-semibold hover:bg-emerald-700 transition-colors"
                 >
                     {editingGoal
                         ? "Update Goal"
@@ -341,10 +345,7 @@ function GoalForm({
             </form>
 
         </div>
-
     );
-
 }
-
 
 export default GoalForm;

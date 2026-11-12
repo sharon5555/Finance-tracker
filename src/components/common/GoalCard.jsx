@@ -1,5 +1,8 @@
 import { useState } from "react";
 
+// Import the reusable date formatter.
+import formatDate from "../../utils/formatDate";
+
 
 /*
     GoalCard displays the progress of one financial goal.
@@ -256,7 +259,7 @@ function GoalCard({
                     <p className="text-sm text-slate-500">
                         Target date:{" "}
                         <span className="font-medium text-slate-700">
-                            {new Date(targetDate).toLocaleDateString()}
+                            {formatDate(targetDate)}
                         </span>
                     </p>
 

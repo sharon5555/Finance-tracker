@@ -1,14 +1,12 @@
+
 import { useEffect, useState } from "react";
 
-
-//Receive the function for adding transactions 
-//and the transactions that may currently be edited.
-function TransactionForm({ 
+// Receive the functions and transaction information from Hero.jsx.
+function TransactionForm({
     onAddTransaction,
     editingTransaction,
     onFinishEditing
 }) {
-
 
     // Store the transaction title.
     const [title, setTitle] = useState("");
@@ -19,34 +17,16 @@ function TransactionForm({
     // Store whether the transaction is Income or Expense.
     const [type, setType] = useState("Income");
 
-     // Store the transaction category.
+    // Store the transaction category.
     const [category, setCategory] = useState("Salary");
 
-     // Store the transaction date
+    // Store the transaction date.
     const [date, setDate] = useState("");
 
-    // load the selected transaction into the form when the user clicks Edit.
-    useEffect(() => {
+    // Store validation error messages.
+    const [error, setError] = useState("");
 
-        // Only run this when a transaction has been selected for editing.
-        if (!editingTransaction) {
-            setTitle("");
-            setAmount("");
-            setType("Income");
-            setCategory("Salary");
-            setDate("");
-            return;
-        }
-
-        // Fill the form with the existing transaction information.
-        setTitle(editingTransaction.title);
-        setAmount(String(editingTransaction.amount));
-        setType(editingTransaction.type);
-        setCategory(editingTransaction.category);
-        setDate(editingTransaction.date);
-
-    }, [editingTransaction]);
-
+    // Available transaction categories.
     const categories = [
         "Salary",
         "Freelance",
@@ -59,83 +39,156 @@ function TransactionForm({
         "Entertainment"
     ];
 
-    // This function runs when the user clicks "Save Transaction".
+    // Load the selected transaction into the form when editing.
+    useEffect(() => {
 
+        // Reset the form when no transaction is being edited.
+        if (!editingTransaction) {
+            setTitle("");
+            setAmount("");
+            setType("Income");
+            setCategory("Salary");
+            setDate("");
+            setError("");
+            return;
+        }
+
+        // Fill the form with the existing transaction information.
+        setTitle(editingTransaction.title || "");
+        setAmount(String(editingTransaction.amount ?? ""));
+        setType(editingTransaction.type || "Income");
+        setCategory(editingTransaction.category || "Salary");
+        setDate(editingTransaction.date || "");
+        setError("");
+
+    }, [editingTransaction]);
+
+    /*
+      VALIDATE THE TRANSACTION DATE
+
+      Checks the date format and confirms that
+      the selected day actually exists.
+    */
+    function isValidDate(dateValue) {
+
+        // Check the expected YYYY-MM-DD format.
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(dateValue)) {
+            return false;
+        }
+
+        // Split the date into year, month and day.
+        const [year, month, day] = dateValue.split("-").map(Number);
+
+        // Create a local date.
+        const selectedDate = new Date(year, month - 1, day);
+
+        // Confirm that the date components match.
+        return (
+            selectedDate.getFullYear() === year &&
+            selectedDate.getMonth() === month - 1 &&
+            selectedDate.getDate() === day
+        );
+    }
+
+    /*
+      SUBMIT THE TRANSACTION FORM
+
+      Validate the information before saving.
+    */
     function handleSubmit(event) {
 
         // Prevent the browser from refreshing the page.
         event.preventDefault();
 
-        // Trim input values consistently
+        // Clean up the entered information.
         const trimmedTitle = title.trim();
         const trimmedAmount = amount.trim();
         const trimmedDate = date.trim();
 
-        // Check if the user entered a title.
+        // Convert the amount into a number.
+        const numericAmount = Number(trimmedAmount);
+
+        // Validate the transaction title.
         if (trimmedTitle === "") {
-            alert("Please enter a transaction title.");
+            setError("Please enter a transaction title.");
             return;
         }
 
-        // Convert the entered amount into a number and validate it.
-        const numericAmount = Number(trimmedAmount);
-
-        // Make sure the amount is a valid, finite, positive number.
+        // Validate the transaction amount.
         if (
             trimmedAmount === "" ||
             !Number.isFinite(numericAmount) ||
             numericAmount <= 0
         ) {
-            alert("Please enter a valid positive amount.");
+            setError("Please enter a valid positive amount.");
             return;
         }
 
-        // Check if the user selected a date.
-        if (trimmedDate === "") {
-            alert("Please select a transaction date.");
+        // Validate the transaction type.
+        if (!["Income", "Expense"].includes(type)) {
+            setError("Please select a valid transaction type.");
             return;
         }
 
-        // create the transaction information.
+        // Validate the selected category.
+        if (!categories.includes(category)) {
+            setError("Please select a valid transaction category.");
+            return;
+        }
+
+        // Validate the transaction date.
+        if (!isValidDate(trimmedDate)) {
+            setError("Please select a valid transaction date.");
+            return;
+        }
+
+        // Prepare the transaction information.
         const transactionData = {
 
-            // Keep the old ID when editing.
-            // Create a new ID when adding a transaction.
+            // Keep the existing ID when editing.
+            // Generate a new ID when creating a transaction.
             id: editingTransaction
                 ? editingTransaction.id
                 : Date.now(),
 
             title: trimmedTitle,
             amount: numericAmount,
-            type: type,
-            category: category,
+            type,
+            category,
             date: trimmedDate,
-        }
+        };
 
-        // Send the new transaction to Hero.jsx.
-        // Hero.jsx will decide whether to add or update it.
+        // Send the transaction information to Hero.jsx.
         onAddTransaction(transactionData);
 
-        // if we were editing, exit edit mode.
+        // Exit editing mode after updating a transaction.
         if (editingTransaction) {
             onFinishEditing();
         }
 
-         // Clear the form after successfully saving.
+        // Clear the form after successful submission.
         setTitle("");
         setAmount("");
         setType("Income");
         setCategory("Salary");
         setDate("");
+        setError("");
     }
 
-
     /*
-        Change the heading depending on whether 
-        the user is adding or editing a transaction.
+      CLEAR THE CURRENT ERROR MESSAGE
+      whenever the user changes an input.
     */
-    return(
+    function clearError() {
+        if (error) {
+            setError("");
+        }
+    }
+
+    return (
         <div className="bg-white p-6 rounded-2xl shadow-md">
+
+            {/* Change the heading when editing a transaction. */}
             <h2 className="text-2xl font-bold text-slate-800 mb-6">
                 {editingTransaction
                     ? "Edit Transaction"
@@ -143,42 +196,50 @@ function TransactionForm({
             </h2>
 
             <form onSubmit={handleSubmit}>
-                <div className="mb-4">
 
-                    {/* 
-                        Title input:
-                        The user must enter a name for the transaction.
-                    */}
-                    
+                {/* Display validation errors inside the form. */}
+                {error && (
+                    <div
+                        role="alert"
+                        className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-600"
+                    >
+                        {error}
+                    </div>
+                )}
+
+                {/* Transaction title input. */}
+                <div className="mb-4">
                     <label className="block mb-2 font-medium">
-                        Title 
+                        Title
                     </label>
 
                     <input
                         type="text"
                         placeholder="e.g. Salary"
                         value={title}
-                        onChange={(event) => setTitle(event.target.value)}
+                        onChange={(event) => {
+                            setTitle(event.target.value);
+                            clearError();
+                        }}
                         className="w-full border rounded-lg px-4 py-2"
                         required
                     />
                 </div>
 
-                {/* 
-                    Amount input:
-                    The user must enter an amount for the transaction.
-                */}
-
+                {/* Transaction amount input. */}
                 <div className="mb-4">
                     <label className="block mb-2 font-medium">
                         Amount
                     </label>
 
-                    <input 
+                    <input
                         type="number"
                         placeholder="e.g. 50000"
                         value={amount}
-                        onChange={(event) => setAmount(event.target.value)}
+                        onChange={(event) => {
+                            setAmount(event.target.value);
+                            clearError();
+                        }}
                         className="w-full border rounded-lg px-4 py-2"
                         min="0.01"
                         step="0.01"
@@ -186,6 +247,7 @@ function TransactionForm({
                     />
                 </div>
 
+                {/* Select the transaction type. */}
                 <div className="mb-4">
                     <label className="block mb-2 font-medium">
                         Type
@@ -193,7 +255,10 @@ function TransactionForm({
 
                     <select
                         value={type}
-                        onChange={(event) => setType(event.target.value)}
+                        onChange={(event) => {
+                            setType(event.target.value);
+                            clearError();
+                        }}
                         className="w-full border rounded-lg px-4 py-2"
                     >
                         <option value="Income">Income</option>
@@ -201,6 +266,7 @@ function TransactionForm({
                     </select>
                 </div>
 
+                {/* Select the transaction category. */}
                 <div className="mb-4">
                     <label className="block mb-2 font-medium">
                         Category
@@ -208,7 +274,10 @@ function TransactionForm({
 
                     <select
                         value={category}
-                        onChange={(event) => setCategory(event.target.value)}
+                        onChange={(event) => {
+                            setCategory(event.target.value);
+                            clearError();
+                        }}
                         className="w-full border rounded-lg px-4 py-2"
                     >
                         {categories.map((item) => (
@@ -219,63 +288,49 @@ function TransactionForm({
                     </select>
                 </div>
 
+                {/* Select the transaction date. */}
                 <div className="mb-4">
                     <label className="block mb-2 font-medium">
                         Date
                     </label>
 
-                    <input type="date"
+                    <input
+                        type="date"
                         value={date}
-                        onChange={(event) => setDate(event.target.value)}
+                        onChange={(event) => {
+                            setDate(event.target.value);
+                            clearError();
+                        }}
                         className="w-full border rounded-lg px-4 py-2"
                         required
                     />
                 </div>
 
-                    {/* 
-                        Form action buttons:
-                        The main button saves or updates the transaction.
-                        The Cancel button only appears while editing.
-                    */}
-                    <div className="flex gap-3">
+                {/* Transaction form action buttons. */}
+                <div className="flex gap-3">
 
-                    {/* 
-                        Save/Update button:
-                        Changes its text depending on whether
-                        the user is adding or editing.
-                    */}
+                    {/* Save or update the transaction. */}
                     <button
                         type="submit"
-                        className="flex-1 bg-emerald-600 text-white py-3 rounded-lg
-                        font-semibold shadow-sm hover:bg-emerald-700 transition-all duration-200
-                        hover:shadow-md"
+                        className="flex-1 bg-emerald-600 text-white py-3 rounded-lg font-semibold shadow-sm hover:bg-emerald-700 transition-all duration-200 hover:shadow-md"
                     >
                         {editingTransaction
                             ? "Update Transaction"
                             : "Save Transaction"}
                     </button>
 
-
-                    {/* 
-                        Cancel button:
-                        Only appears when the user is editing a transaction.
-                    */}
+                    {/* Cancel editing without saving changes. */}
                     {editingTransaction && (
                         <button
                             type="button"
-
-                            // Exit edit mode without saving changes.
                             onClick={onFinishEditing}
-
-                            className="flex-1 bg-slate-200 text-slate-700 py-3 rounded-lg
-                            font-semibold border border-slate-200 hover:bg-slate-200
-                            transition-all duration-200"
+                            className="flex-1 bg-slate-200 text-slate-700 py-3 rounded-lg font-semibold border border-slate-200 hover:bg-slate-300 transition-all duration-200"
                         >
                             Cancel
                         </button>
-                        )}
+                    )}
 
-                    </div>
+                </div>
             </form>
         </div>
     );

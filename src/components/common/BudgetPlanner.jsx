@@ -1,5 +1,7 @@
-
 import React, { useState } from "react";
+
+// Import the reusable Nigerian Naira currency formatter.
+import formatCurrency from "../../utils/formatCurrency";
 
 function BudgetPlanner({
     budgets = [],
@@ -45,10 +47,6 @@ function BudgetPlanner({
             (spendingByCategory[normalizedCategory] || 0) +
             (Number(transaction.amount) || 0);
     });
-
-    // Format amounts as Nigerian Naira.
-    const formatCurrency = (value) =>
-        `₦${Number(value).toLocaleString("en-NG")}`;
 
     /*
       LOAD A BUDGET FOR EDITING
