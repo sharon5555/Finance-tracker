@@ -1,5 +1,10 @@
-
 import { useEffect, useState } from "react";
+// Import the reusable date validator.
+import isValidDate from "../../utils/isValidDate";
+// Import the reusable positive amount validator.
+import isValidAmount from "../../utils/isValidAmount";
+// Import the shared transaction categories.
+import transactionCategories from "../../constants/transactionCatergories";
 
 // Receive the functions and transaction information from Hero.jsx.
 function TransactionForm({
@@ -26,19 +31,6 @@ function TransactionForm({
     // Store validation error messages.
     const [error, setError] = useState("");
 
-    // Available transaction categories.
-    const categories = [
-        "Salary",
-        "Freelance",
-        "Business",
-        "Investment",
-        "Food",
-        "Transport",
-        "Bills",
-        "Shopping",
-        "Entertainment"
-    ];
-
     // Load the selected transaction into the form when editing.
     useEffect(() => {
 
@@ -64,33 +56,6 @@ function TransactionForm({
     }, [editingTransaction]);
 
     /*
-      VALIDATE THE TRANSACTION DATE
-
-      Checks the date format and confirms that
-      the selected day actually exists.
-    */
-    function isValidDate(dateValue) {
-
-        // Check the expected YYYY-MM-DD format.
-        if (!/^\d{4}-\d{2}-\d{2}$/.test(dateValue)) {
-            return false;
-        }
-
-        // Split the date into year, month and day.
-        const [year, month, day] = dateValue.split("-").map(Number);
-
-        // Create a local date.
-        const selectedDate = new Date(year, month - 1, day);
-
-        // Confirm that the date components match.
-        return (
-            selectedDate.getFullYear() === year &&
-            selectedDate.getMonth() === month - 1 &&
-            selectedDate.getDate() === day
-        );
-    }
-
-    /*
       SUBMIT THE TRANSACTION FORM
 
       Validate the information before saving.
@@ -102,11 +67,10 @@ function TransactionForm({
 
         // Clean up the entered information.
         const trimmedTitle = title.trim();
-        const trimmedAmount = amount.trim();
         const trimmedDate = date.trim();
 
         // Convert the amount into a number.
-        const numericAmount = Number(trimmedAmount);
+        const numericAmount = Number(amount);
 
         // Validate the transaction title.
         if (trimmedTitle === "") {
@@ -114,13 +78,9 @@ function TransactionForm({
             return;
         }
 
-        // Validate the transaction amount.
-        if (
-            trimmedAmount === "" ||
-            !Number.isFinite(numericAmount) ||
-            numericAmount <= 0
-        ) {
-            setError("Please enter a valid positive amount.");
+        // Ensure the transaction amount is valid and positive.
+        if (!isValidAmount(amount)) {
+            setError("Please enter a valid transaction amount.");
             return;
         }
 
@@ -130,13 +90,13 @@ function TransactionForm({
             return;
         }
 
-        // Validate the selected category.
-        if (!categories.includes(category)) {
+        // Validate the category using the shared category list.
+        if (!transactionCategories.includes(category)) {
             setError("Please select a valid transaction category.");
             return;
         }
 
-        // Validate the transaction date.
+        // Validate the transaction date using the imported utility.
         if (!isValidDate(trimmedDate)) {
             setError("Please select a valid transaction date.");
             return;
@@ -158,21 +118,50 @@ function TransactionForm({
             date: trimmedDate,
         };
 
-        // Send the transaction information to Hero.jsx.
-        onAddTransaction(transactionData);
+        /*
+          SAVE THE TRANSACTION
 
-        // Exit editing mode after updating a transaction.
-        if (editingTransaction) {
-            onFinishEditing();
+          Send the transaction to Hero.jsx and check whether
+          the parent component accepted it before clearing the form.
+        */
+        try {
+
+            // Send the transaction information to Hero.jsx.
+            const saveResult = onAddTransaction(transactionData);
+
+            // Keep the form unchanged if the parent rejects the transaction.
+            if (saveResult === false) {
+                setError("The transaction could not be saved. Please check your information.");
+                return;
+            }
+
+            // Exit editing mode after a successful update.
+            if (
+                editingTransaction &&
+                typeof onFinishEditing === "function"
+            ) {
+                onFinishEditing();
+            }
+
+            // Clear the form after successful submission.
+            setTitle("");
+            setAmount("");
+            setType("Income");
+            setCategory("Salary");
+            setDate("");
+            setError("");
+
+        } catch (submissionError) {
+
+            // Log unexpected submission errors.
+            console.error(
+                "Unable to save transaction:",
+                submissionError
+            );
+
+            // Display an error without clearing the form.
+            setError("Something went wrong while saving your transaction. Please try again.");
         }
-
-        // Clear the form after successful submission.
-        setTitle("");
-        setAmount("");
-        setType("Income");
-        setCategory("Salary");
-        setDate("");
-        setError("");
     }
 
     /*
@@ -280,9 +269,10 @@ function TransactionForm({
                         }}
                         className="w-full border rounded-lg px-4 py-2"
                     >
-                        {categories.map((item) => (
-                            <option key={item} value={item}>
-                                {item}
+                        {/* Display the available transaction categories. */}
+                        {transactionCategories.map((cat) => (
+                            <option key={cat} value={cat}>
+                                {cat}
                             </option>
                         ))}
                     </select>

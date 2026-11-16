@@ -55,6 +55,12 @@ import loadFinflowData from "../../utils/loadFinflowData";
 // Import the reusable date validation function.
 import isValidDate from "../../utils/isValidDate";
 
+// Import the reusable amount validator.
+import isValidAmount from "../../utils/isValidAmount";
+
+// Import the shared transaction categories.
+import transactionCategories from "../../constants/transactionCatergories";
+
 
 
 //   PART A
@@ -143,7 +149,7 @@ function Hero() {
     // null means that no transaction is being edited.
     const [editingTransaction, setEditingTransaction] = useState(null);
 
-    // Storethe goal currently being edited.
+    // Store the goal currently being edited.
     // null means that no goal is being edited.
     const [editingGoal, setEditingGoal] = useState(null);
 
@@ -213,14 +219,9 @@ function Hero() {
             return false;
         }
 
-        // Validate the target amount.
-        if (
-            goal.targetAmount === "" ||
-            goal.targetAmount === null ||
-            !Number.isFinite(numericTarget) ||
-            numericTarget <= 0
-        ) {
-            alert("Please enter a valid positive target amount.");
+        // Ensure the savings goal has a valid positive target amount.
+        if (!isValidAmount(goal.targetAmount)) {
+            alert("Please enter a valid savings goal target.");
             return false;
         }
 
@@ -230,6 +231,12 @@ function Hero() {
             numericSaved < 0
         ) {
             alert("Please enter a valid savings amount.");
+            return false;
+        }
+
+        // Prevent the saved amount from exceeding the target amount.
+        if (numericSaved > numericTarget) {
+            alert("The saved amount cannot be greater than the target amount.");
             return false;
         }
 
@@ -320,19 +327,14 @@ function Hero() {
             return false;
         }
 
-        // Convert the supplied amount into a number.
-        const numericAmount = Number(amount);
-
-        // Reject empty, invalid, zero, or negative amounts.
-        if (
-            amount === "" ||
-            amount === null ||
-            !Number.isFinite(numericAmount) ||
-            numericAmount <= 0
-        ) {
-            alert("Please enter a valid positive savings amount.");
+        // Reject empty, invalid, zero or negative amounts.
+        if (!isValidAmount(amount)) {
+            alert("Please enter a valid amount to add.");
             return false;
         }
+
+        // Convert the supplied amount into a number.
+        const numericAmount = Number(amount);
 
         // Update the selected goal using the latest state.
         setGoals((previousGoals) =>
@@ -444,33 +446,15 @@ function Hero() {
         // Convert the amount into a number.
         const numericAmount = Number(transaction.amount);
 
-        // Available transaction categories.
-        const validCategories = [
-            "Salary",
-            "Freelance",
-            "Business",
-            "Investment",
-            "Food",
-            "Transport",
-            "Bills",
-            "Shopping",
-            "Entertainment"
-        ];
-
         // Validate the transaction title.
         if (!trimmedTitle) {
             alert("A transaction title is required.");
             return false;
         }
 
-        // Validate the transaction amount.
-        if (
-            transaction.amount === "" ||
-            transaction.amount === null ||
-            !Number.isFinite(numericAmount) ||
-            numericAmount <= 0
-        ) {
-            alert("Please provide a valid positive transaction amount.");
+        // Reject empty, invalid, zero or negative transaction amounts.
+        if (!isValidAmount(transaction.amount)) {
+            alert("Please enter a valid transaction amount.");
             return false;
         }
 
@@ -480,8 +464,8 @@ function Hero() {
             return false;
         }
 
-        // Validate the transaction category.
-        if (!validCategories.includes(transaction.category)) {
+        // Validate the category using the shared category list.
+        if (!transactionCategories.includes(transaction.category)) {
             alert("Please select a valid transaction category.");
             return false;
         }
@@ -650,25 +634,20 @@ function Hero() {
             (item) => item.toLowerCase() === normalizedCategory
         );
 
-        // Convert the budget amount into a number.
-        const numericAmount = Number(newBudget.amount);
-
         // Validate the category.
         if (!selectedCategory) {
             alert("Please select a valid budget category.");
             return false;
         }
 
-        // Validate the budget amount.
-        if (
-            newBudget.amount === "" ||
-            newBudget.amount === null ||
-            !Number.isFinite(numericAmount) ||
-            numericAmount <= 0
-        ) {
-            alert("Please enter a valid positive budget amount.");
+        // Ensure the budget amount is a valid positive number.
+        if (!isValidAmount(newBudget.amount)) {
+            alert("Please enter a valid budget amount.");
             return false;
         }
+
+        // Convert the budget amount into a number.
+        const numericAmount = Number(newBudget.amount);
 
         // Update the budget using the latest state.
         setBudgets((previousBudgets) => {
