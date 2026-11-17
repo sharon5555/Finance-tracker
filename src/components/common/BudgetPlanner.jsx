@@ -1,7 +1,10 @@
-import React, { useState } from "react";
+import { useState } from "react";
 
 // Import the reusable Nigerian Naira currency formatter.
 import formatCurrency from "../../utils/formatCurrency";
+
+// Import the reusable positive amount validator.
+import isValidAmount from "../../utils/isValidAmount";
 
 function BudgetPlanner({
     budgets = [],
@@ -73,12 +76,20 @@ function BudgetPlanner({
     /*
       DELETE A BUDGET
 
-      If the deleted budget is currently being edited,
-      also clear the editing form.
+      Only clear the editing form when the parent
+      confirms that the budget was successfully deleted.
     */
     function handleDeleteBudget(id) {
-        onDeleteBudget(id);
 
+        // Ask Hero.jsx to delete the selected budget.
+        const result = onDeleteBudget(id);
+
+        // Stop if the deletion was cancelled or unsuccessful.
+        if (result === false) {
+            return;
+        }
+
+        // Clear the form if the deleted budget was being edited.
         if (editingBudgetId === id) {
             handleCancelEdit();
         }
@@ -87,31 +98,31 @@ function BudgetPlanner({
     /*
       SUBMIT THE BUDGET FORM
 
-      This function handles both creating and updating budgets.
+      Handles both creating and updating budgets.
+      Validates the amount and only resets the form
+      when the parent confirms a successful submission.
     */
     function handleSubmit(event) {
         event.preventDefault();
 
-        const budgetAmount = Number(amount);
-
         // Validate the entered budget amount.
-        if (
-            amount.trim() === "" ||
-            !Number.isFinite(budgetAmount) ||
-            budgetAmount <= 0
-        ) {
+        if (!isValidAmount(amount)) {
             alert("Please enter a valid budget amount.");
             return;
         }
 
-        // Send the budget to Hero.jsx.
-        // The existing addBudget function handles both adding and updating.
-        onAddBudget({
+        // Send the budget details to Hero.jsx.
+        const result = onAddBudget({
             category,
-            amount: budgetAmount
+            amount: Number(amount)
         });
 
-        // Reset the form after submission.
+        // Keep the form values if the parent rejects the submission.
+        if (result === false) {
+            return;
+        }
+
+        // Reset the form after a successful submission.
         handleCancelEdit();
     }
 

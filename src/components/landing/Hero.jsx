@@ -307,6 +307,7 @@ function Hero() {
         ADD MONEY TO A FINANCIAL GOAL
 
         Validate the goal and amount before updating the savings.
+        Prevent the saved amount from exceeding the goal target.
     */
     function addMoneyToGoal(goalId, amount) {
 
@@ -336,14 +337,26 @@ function Hero() {
         // Convert the supplied amount into a number.
         const numericAmount = Number(amount);
 
+        // Get the current savings and target as numbers.
+        const currentSaved = Number(selectedGoal.currentAmount) || 0;
+        const targetAmount = Number(selectedGoal.targetAmount);
+
+        // Prevent the new savings from exceeding the goal target.
+        if (currentSaved + numericAmount > targetAmount) {
+            alert(
+                `You can only add ${formatCurrency(
+                    Math.max(targetAmount - currentSaved, 0)
+                )} to this goal.`
+            );
+            return false;
+        }
+
         // Update the selected goal using the latest state.
         setGoals((previousGoals) =>
             previousGoals.map((goal) => {
 
                 // Add money only to the selected goal.
                 if (goal.id === goalId) {
-                    const currentSaved = Number(goal.currentAmount) || 0;
-
                     return {
                         ...goal,
                         currentAmount: currentSaved + numericAmount

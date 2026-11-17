@@ -3,6 +3,9 @@ import { useEffect, useState } from "react";
 // Import the reusable date validator.
 import isValidDate from "../../utils/isValidDate";
 
+// Import the reusable positive amount validator.
+import isValidAmount from "../../utils/isValidAmount";
+
 /*
     GOAL FORM
 
@@ -40,14 +43,19 @@ function GoalForm({
     const [error, setError] = useState("");
 
     /*
-        Load existing goal information when editing.
+        LOAD OR RESET GOAL FORM
+
+        When editingGoal exists, populate the form with its details.
+        When editingGoal is cleared, reset the form fields.
     */
     useEffect(() => {
 
         if (!editingGoal) {
+            resetForm();
             return;
         }
 
+        // Populate the form with the selected goal's information.
         setName(editingGoal.name || "");
         setTargetAmount(String(editingGoal.targetAmount ?? ""));
         setCurrentAmount(String(editingGoal.currentAmount ?? ""));
@@ -90,23 +98,19 @@ function GoalForm({
             return;
         }
 
-        // Convert the target amount into a number.
-        const target = Number(targetAmount);
-
-        if (
-            targetAmount.trim() === "" ||
-            !Number.isFinite(target) ||
-            target <= 0
-        ) {
+        // Ensure the savings goal target is a valid positive amount using our utility.
+        if (!isValidAmount(targetAmount)) {
             setError("Please enter a valid positive target amount.");
             return;
         }
 
         // Convert the starting savings amount.
+        // An empty field is allowed and treated as zero.
         const startingAmount = currentAmount.trim() === ""
             ? 0
             : Number(currentAmount);
 
+        // Reject invalid, negative or non-finite starting amounts.
         if (
             !Number.isFinite(startingAmount) ||
             startingAmount < 0
@@ -117,6 +121,7 @@ function GoalForm({
 
         // Keep the existing rule that starting savings
         // cannot exceed the target amount.
+        const target = Number(targetAmount);
         if (startingAmount > target) {
             setError("Starting amount cannot be greater than the target.");
             return;
