@@ -4,7 +4,7 @@ import isValidDate from "../../utils/isValidDate";
 // Import the reusable positive amount validator.
 import isValidAmount from "../../utils/isValidAmount";
 // Import the shared transaction categories.
-import transactionCategories from "../../constants/transactionCatergories";
+import transactionCategories from "../../constants/transactionCategories";
 
 // Receive the functions and transaction information from Hero.jsx.
 function TransactionForm({
